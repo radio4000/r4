@@ -2,20 +2,30 @@ const findTracks = require('./src/find-tracks');
 const downloadTracks = require('./src/download-tracks');
 const spawn = require('child_process').spawn;
 const chalk = require('chalk');
+const ora = require('ora');
 
 const init = () => {
 	const url = process.argv[2];
 
 	if (!url) {
 		console.log(chalk.red('You have to pass a valid and complete Radio4000 channel URL'));
+		console.log('Like this: `r4dl <url>`');
 		return;
 	}
 
-	console.log(chalk.yellow(`Fetching ${url} for you. This can take quite a while (~1-20 minutes)`));
-	findTracks(url).then(ids => {
-		const filteredIds = ids.filter(id => id.charAt(0) !== '-');
-		downloadTracks(filteredIds, () => {
-			console.log(chalk.green('All systems go. Check the `downloads` folder.'));
+	const spinner = ora(`Fetching ${url} for you.`);
+	spinner.start();
+	setTimeout(() => {
+		spinner.color = 'yellow';
+		spinner.text = 'This can take quite a while (~1-20 minutes)';
+	}, 4000);
+
+	findTracks(url).then(youtubeIds => {
+		spinner.stop();
+		console.log(chalk.yellow('Found all the tracks. Now downloading…'));
+
+		downloadTracks(youtubeIds, () => {
+			console.log(chalk.green('. Check the `downloads` folder.'));
 			spawn('open', ['downloads']);
 		});
 	});
