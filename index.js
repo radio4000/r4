@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const findTracks = require('./src/find-tracks');
 const downloadTracks = require('./src/download-tracks');
 const spawn = require('child_process').spawn;
