@@ -7,9 +7,8 @@ const defaultOptions = [
 	'--extract-audio',
 	'--output=./downloads/%(title)s-%(id)s.%(ext)s',
 	'--no-call-home',
-	'--ignore-errors'
-	// '--audio-quality 0',
-	// 'max-downloads 1',
+	'--ignore-errors',
+	'--audio-quality=0'
 	// 'write-thumbnail ',
 ];
 
