@@ -1,7 +1,7 @@
 import test from 'ava';
-const r4dl = require('./index');
 const findTracks = require('./src/find-tracks');
 const downloadTracks = require('./src/download-tracks');
+const r4dl = require('./index');
 
 test('all functions are there', t => {
 	t.is(typeof r4dl, 'function');
@@ -10,6 +10,7 @@ test('all functions are there', t => {
 });
 
 test('findTracks returns an array of strings', async t => {
-	const value = await findTracks('http://much.radio4000.com/yas');
-	t.ok(value.length);
+	const testUrl = 'https://radio4000.com/ifeveryoneelseforgets';
+	const tracks = await findTracks(testUrl);
+	t.truthy(tracks.length);
 });

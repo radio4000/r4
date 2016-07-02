@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
+const spawn = require('child_process').spawn;
+const ora = require('ora');
+const chalk = require('chalk');
 const findTracks = require('./src/find-tracks');
 const downloadTracks = require('./src/download-tracks');
-const spawn = require('child_process').spawn;
-const chalk = require('chalk');
-const ora = require('ora');
 
 const init = () => {
 	const url = process.argv[2];
@@ -24,7 +24,7 @@ const init = () => {
 
 	findTracks(url).then(youtubeIds => {
 		spinner.stop();
-		console.log(chalk.yellow('Found all the tracks. Now downloading…'));
+		console.log(chalk.yellow(`Found all ${youtubeIds.length} tracks. Now downloading…`));
 
 		downloadTracks(youtubeIds, () => {
 			console.log(chalk.green('. Check the `downloads` folder.'));

@@ -5,7 +5,7 @@
 You need to have node and homebrew installed. Then run:
 
 1. `brew install youtube-dl`
-2. `npm start http://much.radio4000.com/yas`
+2. `npm start https://radio4000.com/ifeveryoneelseforgets`
 
 ## Tests
 
