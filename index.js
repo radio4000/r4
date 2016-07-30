@@ -3,32 +3,34 @@
 const spawn = require('child_process').spawn;
 const ora = require('ora');
 const chalk = require('chalk');
+const urlRegex = require('url-regex');
 const findTracks = require('./src/find-tracks');
 const downloadTracks = require('./src/download-tracks');
 
 const init = () => {
 	const url = process.argv[2];
-
 	if (!url) {
-		console.log(chalk.red('You have to pass a valid and complete Radio4000 channel URL'));
-		console.log('Like this: `r4dl <url>`');
+		console.log(chalk.red('Uh oh. You have to pass the full URL to the radio.'));
+		console.log('Like this: r4dl https://radio4000.com/name-of-your-radio');
 		return;
 	}
-
-	const spinner = ora(`Fetching ${url} for you.`);
+	if (!urlRegex().test(url)) {
+		console.log(chalk.red(`What you wrote doesn't look like a real URL. Try this format:`));
+		console.log('r4dl https://radio4000.com/name-of-your-radio');
+		return;
+	}
+	const slug = url.split('.com/')[1];
+	const spinner = ora(`Looing for tracks from ${url} for you.`);
 	spinner.start();
 	setTimeout(() => {
-		spinner.color = 'yellow';
 		spinner.text = 'This can take quite a while (~1-20 minutes)';
 	}, 4000);
-
 	findTracks(url).then(youtubeIds => {
 		spinner.stop();
-		console.log(chalk.yellow(`Found all ${youtubeIds.length} tracks. Now downloading…`));
-
-		downloadTracks(youtubeIds, () => {
-			console.log(chalk.green('. Check the `downloads` folder.'));
-			spawn('open', ['downloads']);
+		console.log(`Found ${youtubeIds.length} tracks. Now downloading…`);
+		downloadTracks(youtubeIds, slug, () => {
+			console.log(chalk.green('Finished downloading. Check the `radio4000-${slug}` folder.'));
+			spawn('open', [`radio4000-${slug}`]);
 		});
 	});
 };

@@ -1,30 +1,28 @@
 const spawn = require('child_process').spawn;
 const chalk = require('chalk');
 
-const defaultOptions = [
-	'--no-playlist',
-	'--format=bestaudio[ext=m4a]/best[ext=mp4]/best',
-	'--extract-audio',
-	'--output=./downloads/%(title)s-%(id)s.%(ext)s',
-	'--no-call-home',
-	'--ignore-errors',
-	'--audio-quality=0'
-	// 'write-thumbnail ',
-];
-
-module.exports = (youtubeids, callback) => {
+module.exports = (youtubeids, downloadFolderName, callback) => {
+	const defaultOptions = [
+		'--no-playlist',
+		'--quiet',
+		'--no-warnings',
+		'--format=bestaudio[ext=m4a]/best[ext=mp4]/best',
+		'--extract-audio',
+		`--output=./radio4000-${downloadFolderName}/%(title)s-%(id)s.%(ext)s`,
+		'--no-call-home',
+		'--ignore-errors',
+		'--audio-quality=0'
+		// 'write-thumbnail ',
+	];
 	const opts = defaultOptions.concat(youtubeids);
 	const cmd = spawn('youtube-dl', opts);
-
 	cmd.stdout.on('data', (data) => {
 		console.log(`${data}`);
 	});
 	cmd.stderr.on('data', (data) => {
 		console.log(chalk.red(`${data}`));
 	});
-	cmd.on('close', (code) => {
-		// console.log('All done!');
-		console.log(`child process exited with code ${code}`);
+	cmd.on('close', () => {
 		callback(cmd);
 	});
 };
