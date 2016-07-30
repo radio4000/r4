@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const spawn = require('child_process').spawn;
+const commandExists = require('command-exists');
 const ora = require('ora');
 const chalk = require('chalk');
 const urlRegex = require('url-regex');
@@ -8,6 +9,12 @@ const findTracks = require('./src/find-tracks');
 const downloadTracks = require('./src/download-tracks');
 
 const init = () => {
+	commandExists('youtube-dl', (err, commandExists) => {
+		if (!commandExists || err) {
+			console.log('You need to install youtube-dl to use this. See https://rg3.github.io/youtube-dl/');
+			return;
+		}
+	});
 	const url = process.argv[2];
 	if (!url) {
 		console.log(chalk.red('Uh oh. You have to pass the full URL to the radio.'));
