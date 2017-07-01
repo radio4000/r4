@@ -4,7 +4,6 @@ const chalk = require('chalk');
 module.exports = (youtubeids, downloadFolderName, callback) => {
 	const defaultOptions = [
 		'--no-playlist',
-		'--quiet',
 		'--no-warnings',
 		'--format=bestaudio[ext=m4a]/best[ext=mp4]/best',
 		'--extract-audio',
@@ -16,6 +15,7 @@ module.exports = (youtubeids, downloadFolderName, callback) => {
 	];
 	const opts = defaultOptions.concat(youtubeids);
 	const cmd = spawn('youtube-dl', opts);
+
 	cmd.stdout.on('data', (data) => {
 		console.log(`${data}`);
 	});

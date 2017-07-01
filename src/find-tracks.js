@@ -2,7 +2,8 @@
 const Nightmare = require('nightmare');
 
 /**
- * Scrapes a radio for the YouTube track ids
+ * Scrapes a Radio4000 channel page for it's tracks
+ * and returns an array of their YouTube ids.
  */
 
 const findTracks = (url) => {
