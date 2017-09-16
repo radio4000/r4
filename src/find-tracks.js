@@ -9,10 +9,10 @@ const Nightmare = require('nightmare')
 const findTracks = url => {
 	return (
 		new Nightmare({ show: false })
-			.goto(url)
-			.wait('.Channel-outlet')
+			.goto(url + '/tracks')
+			.wait('.List')
 			// Waiting for .Track is not reliable. Neither is this. But yea.
-			.wait(6000)
+			// .wait(6000)
 			.evaluate(() => {
 				const elements = document.querySelectorAll('.Track')
 				const ids = Array.from(elements)
