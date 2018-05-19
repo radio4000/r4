@@ -1,27 +1,47 @@
 #!/usr/bin/env node
 
+'use strict'
+
 const args = require('args')
-const {createBackup} = require('radio4000-sdk')
+const prompts = require('prompts')
+const {createBackup, findChannels} = require('radio4000-sdk')
 const downloadTracks = require('./src/download-tracks')
 
-args
-	.option('destination', 'the path of the folder to download ')
-	.examples([{
-		usage: 'r4 download 200ok',
-		description: 'Download a Radio4000 channel with the slug "200ok"'
-	}])
+const main = async function() {
+	args
+		.option('destination', 'the path of the folder to download ')
+		.examples([{
+			usage: 'r4 download 200ok',
+			description: 'Download a Radio4000 channel with the slug "200ok"'
+		}])
 
-const flags = args.parse(process.argv, {
-	version: false,
-	value: 'channel-slug'
-})
-const slug = args.sub[0]
+	const flags = args.parse(process.argv, {
+		version: false,
+		value: 'channel-slug'
+	})
 
-if (!slug) args.showHelp()
+	let slug = args.sub[0];
 
-console.log(`Downloading channel: ${slug}…`)
+	if (!slug) {
+		// args.showHelp()
+		const channels = await findChannels()
+		const question = {
+			type: 'autocomplete',
+			name: 'slug',
+			message: 'Search and select a radio',
+			choices: channels.map(c => ({
+				title: c.title,
+				value: c.slug
+			}))
+		}
+		const answer = await prompts(question)
+		slug = answer.slug
+	}
 
-const main = async () => {
+	if (!slug) process.exit()
+
+	console.log(`Downloading channel: ${slug}…`)
+
 	try {
 		const backup = await createBackup(slug)
 		const urls = backup.tracks
