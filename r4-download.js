@@ -8,7 +8,7 @@ args
 	.option('destination', 'the path of the folder to download ')
 	.examples([{
 		usage: 'r4 download 200ok',
-		description: 'To download a Radio4000 channel with the slug "200ok"'
+		description: 'Download a Radio4000 channel with the slug "200ok"'
 	}])
 
 const flags = args.parse(process.argv, {
@@ -26,9 +26,8 @@ const main = async () => {
 		const backup = await createBackup(slug)
 		const urls = backup.tracks
 			.map(track => `http://www.youtube.com/watch?v=${track.ytid}`)
-		downloadTracks(urls, slug, (cmd) => {
-			console.log('DONE')
-		})
+		await downloadTracks(urls, slug)
+		console.log('DONE')
 	} catch (err) {
 		console.log(err)
 	}

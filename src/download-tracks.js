@@ -1,7 +1,7 @@
 const spawn = require('child_process').spawn
 const chalk = require('chalk')
 
-module.exports = (youtubeids, downloadFolderName, callback) => {
+module.exports = (youtubeids, downloadFolderName) => {
 	const defaultOptions = [
 		'--no-playlist', // If URL points to a video in a playlist, only take the video
 		'--no-warnings',
@@ -14,15 +14,19 @@ module.exports = (youtubeids, downloadFolderName, callback) => {
 		// 'write-thumbnail ',
 	]
 	const opts = defaultOptions.concat(youtubeids)
-	const cmd = spawn('youtube-dl', opts)
 
-	cmd.stdout.on('data', data => {
-		console.log(`${data}`)
-	})
-	cmd.stderr.on('data', data => {
-		console.log(chalk.red(`${data}`))
-	})
-	cmd.on('close', () => {
-		callback(cmd)
+	return new Promise((resolve, reject) => {
+		const cmd = spawn('youtube-dl', opts)
+		cmd.stdout.on('data', data => {
+			console.log(`${data}`)
+		})
+
+		cmd.stderr.on('data', data => {
+			console.log(chalk.red(`${data}`))
+		})
+
+		cmd.on('close', () => {
+			resolve(cmd)
+		})
 	})
 }

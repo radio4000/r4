@@ -46,7 +46,7 @@ const init = () => {
 		spinner.stop()
 		log(`Found ${youtubeIds.length} tracks. Now downloading…`)
 
-		downloadTracks(youtubeIds, slug, () => {
+		downloadTracks(youtubeIds, slug).then(() => {
 			console.log(
 				chalk.green(
 					`Finished downloading. Check the "radio4000-${slug}"" folder.`
