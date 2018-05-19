@@ -17,21 +17,34 @@ const flags = args.parse(process.argv, {
 })
 const slug = args.sub[0]
 
-if (!slug) {
-	args.showHelp();
-}
+if (!slug) args.showHelp()
 
 console.log(`Downloading channel: ${slug}…`)
 
-createBackup(slug)
-	.then(backup => backup.tracks.map(t => t.ytid))
-	.then(ids => ids.map(id => `http://www.youtube.com/watch?v=${id}`))
-	.then(urls => {
-		const folderName = slug
-		downloadTracks(urls, folderName, (cmd) => {
+const main = async () => {
+	try {
+		const backup = await createBackup(slug)
+		const urls = backup.tracks
+			.map(track => `http://www.youtube.com/watch?v=${track.ytid}`)
+		downloadTracks(urls, slug, (cmd) => {
 			console.log('DONE')
 		})
-	})
-	.then(err => {
+	} catch (err) {
 		console.log(err)
-	})
+	}
+}
+
+main()
+
+// createBackup(slug)
+// 	.then(backup => backup.tracks.map(t => t.ytid))
+// 	.then(ids => ids.map(id => `http://www.youtube.com/watch?v=${id}`))
+// 	.then(urls => {
+// 		const folderName = slug
+// 		downloadTracks(urls, folderName, (cmd) => {
+// 			console.log('DONE')
+// 		})
+// 	})
+// 	.then(err => {
+// 		console.log(err)
+// 	})
