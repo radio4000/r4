@@ -3,10 +3,10 @@
 const args = require('args')
 
 args
-	.command('download', 'Download a channel')
+	.command('download', 'Download a radio4000.com channel')
 	.examples([{
 		usage: 'r4 download 200ok',
-		description: 'download a Radio4000 channel with the slug "200ok"'
+		description: `To download the channel at https://radio4000.com/200ok`
 	}])
 
 const flags = args.parse(process.argv)
