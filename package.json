@@ -16,6 +16,7 @@
     "command-exists": "^1.0.2",
     "nightmare": "^2.2.0",
     "ora": "^0.2.0",
+    "radio4000-sdk": "^0.0.5",
     "url-regex": "^3.2.0"
   },
   "devDependencies": {

@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
 const args = require('args')
-// const downloadTracks = require('src/download-tracks')
+const {createBackup} = require('radio4000-sdk')
+const downloadTracks = require('./src/download-tracks')
 
 args
 	.option('destination', 'the path of the folder to download ')
@@ -16,8 +17,21 @@ const flags = args.parse(process.argv, {
 })
 const slug = args.sub[0]
 
-console.log(slug, flags)
-
 if (!slug) {
 	args.showHelp();
 }
+
+console.log(`Downloading channel: ${slug}…`)
+
+createBackup(slug)
+	.then(backup => backup.tracks.map(t => t.ytid))
+	.then(ids => ids.map(id => `http://www.youtube.com/watch?v=${id}`))
+	.then(urls => {
+		const folderName = slug
+		downloadTracks(urls, folderName, (cmd) => {
+			console.log('DONE')
+		})
+	})
+	.then(err => {
+		console.log(err)
+	})
