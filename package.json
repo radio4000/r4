@@ -1,16 +1,17 @@
 {
-  "name": "r4dl",
+  "name": "r4",
   "version": "0.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "CLI for Radio4000",
+  "main": "r4.js",
   "scripts": {
     "start": "node . ",
     "test": "xo && ava",
     "prettier": "prettier --write --use-tabs --no-semi --single-quote --no-bracket-spacing '{index,test}.js' 'src/**/*.js'"
   },
-  "author": "donleche",
-  "license": "MIT",
+  "author": "internet4000",
+  "license": "GPL3",
   "dependencies": {
+    "args": "^4.0.0",
     "chalk": "^1.1.1",
     "command-exists": "^1.0.2",
     "nightmare": "^2.2.0",
@@ -23,7 +24,8 @@
     "xo": "^0.15.1"
   },
   "bin": {
-    "r4dl": "./index.js"
+    "r4": "./r4.js",
+    "r4-download": "./r4-download.js"
   },
   "xo": {
     "semicolon": false
