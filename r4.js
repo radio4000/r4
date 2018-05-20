@@ -14,7 +14,7 @@ args
 	}])
 
 const flags = args.parse(process.argv, {
-	mainColor: ['black']
+	mainColor: ['reset']
 })
 
 const command = args.sub[0]
