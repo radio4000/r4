@@ -14,6 +14,7 @@
     "args": "^4.0.0",
     "chalk": "^1.1.1",
     "command-exists": "^1.0.2",
+    "listen-to-youtube-cli": "^1.0.0",
     "nightmare": "^2.2.0",
     "ora": "^0.2.0",
     "prompts": "^0.1.8",
@@ -27,7 +28,8 @@
   },
   "bin": {
     "r4": "./r4.js",
-    "r4-download": "./r4-download.js"
+    "r4-download": "./r4-download.js",
+    "r4-listen": "./r4-listen.js"
   },
   "xo": {
     "semicolon": false
