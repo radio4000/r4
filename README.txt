@@ -7,7 +7,7 @@ USAGE
 
 r4 download <channel-slug>
 r4 listen <channel-slug>
-r4 <command> hel
+r4 <command> help
 r4 -h, --help
 r4 -v, --version
 
