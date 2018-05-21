@@ -4,25 +4,30 @@
 
 const args = require('args')
 const prompts = require('prompts')
-const {findChannels, findChannelBySlug, findTracksByChannel} = require('radio4000-sdk')
 const listenToYoutube = require('listen-to-youtube-cli')
 const Speaker = require('speaker')
+const {
+	findChannels,
+	findChannelBySlug,
+	findTracksByChannel
+} = require('radio4000-sdk')
+
+args
+	.option('search', 'search for a radio')
+	.examples([{
+		usage: 'r4 listen 200ok',
+		description: 'Listen to the Radio4000 channel with slug "200ok"'
+	}])
+
+const flags = args.parse(process.argv, {
+	version: false,
+	value: 'channel-slug'
+})
+
+let slug = args.sub[0]
 
 const main = async function() {
-	args
-		.examples([{
-			usage: 'r4 listen 200ok',
-			description: 'Listen to the Radio4000 channel with slug "200ok"'
-		}])
-
-	const flags = args.parse(process.argv, {
-		version: false,
-		value: 'channel-slug'
-	})
-
-	let slug = args.sub[0]
-	if (!slug) {
-		// args.showHelp()
+	if (flags.search) {
 		const channels = await findChannels()
 		const question = {
 			type: 'autocomplete',
@@ -36,7 +41,8 @@ const main = async function() {
 		const answer = await prompts(question)
 		slug = answer.slug
 	}
-	if (!slug) process.exit()
+
+	if (!slug) args.showHelp()
 
 	// Get a track
 	const channel = await findChannelBySlug(slug)

@@ -13,12 +13,12 @@ args
 		description: `Play and listen to the channel at https://radio4000.com/detecteve`
 	}])
 
-const flags = args.parse(process.argv, {
+args.parse(process.argv, {
+	version: false,
+	// Use default terminal color.
 	mainColor: ['reset']
 })
 
-const command = args.sub[0]
-
-if (!command) {
-	args.showHelp();
+if (!args.sub.length) {
+	args.showHelp()
 }
