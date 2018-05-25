@@ -16,7 +16,6 @@ const init = () => {
 			log(
 				'You need to install youtube-dl to use this. See https://rg3.github.io/youtube-dl/'
 			)
-			return
 		}
 	})
 

@@ -8,10 +8,7 @@ const autocompleteChannels = require('./lib/autocomplete-channels')
 args
 	.option('destination', 'the path of the folder to download')
 	.option('search', 'search for a radio')
-	.examples([{
-		usage: 'r4 download 200ok',
-		description: 'Download a Radio4000 channel with the slug "200ok"'
-	}])
+	.example('r4 download 200ok', 'Download the channel with the slug "200ok"')
 
 const flags = args.parse(process.argv, {
 	version: false,
@@ -31,7 +28,9 @@ const main = async function() {
 
 	try {
 		const backup = await createBackup(slug)
-		const urls = backup.tracks.map(track => `http://www.youtube.com/watch?v=${track.ytid}`)
+		const urls = backup.tracks.map(
+			track => `http://www.youtube.com/watch?v=${track.ytid}`
+		)
 		await downloadTracks(urls, slug)
 		console.log('DONE')
 	} catch (err) {

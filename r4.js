@@ -5,13 +5,14 @@ const args = require('args')
 args
 	.command('download', 'Download a radio4000.com channel')
 	.command('listen', 'Listen to a radio4000.com channel')
-	.examples([{
-		usage: 'r4 download 200ok',
-		description: `Download the channel at https://radio4000.com/200ok`
-	},{
-		usage: 'r4 listen detecteve',
-		description: `Play and listen to the channel at https://radio4000.com/detecteve`
-	}])
+	.example(
+		'r4 download 200ok',
+		`Download the channel at https://radio4000.com/200ok`
+	)
+	.example(
+		'r4 listen detecteve',
+		`Play and listen to the channel at https://radio4000.com/detecteve`
+	)
 
 args.parse(process.argv, {
 	version: false,
@@ -19,6 +20,6 @@ args.parse(process.argv, {
 	mainColor: ['reset']
 })
 
-if (!args.sub.length) {
+if (args.sub.length === 0) {
 	args.showHelp()
 }
