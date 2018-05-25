@@ -31,8 +31,8 @@ You will need `node` and [youtube-dl](https://github.com/rg3/youtube-dl/#install
 
 DEVELOPMENT
 
-Run tests with `yarn test`.
-Format all scripts with `yarn prettier`.
+Lint scripts and run tests with `yarn test`.
+To fix linting, try `xo --fix`.
 
 If you you are changing the path or adding a new binary, remember to run `yarn unlink` and `yarn link` in the project.
 
