@@ -5,7 +5,7 @@ const commandExists = require('command-exists')
 const ora = require('ora')
 const chalk = require('chalk')
 const urlRegex = require('url-regex')
-const findTracks = require('./lib/find-tracks')
+const scrapeTracks = require('./lib/scrape-tracks')
 const downloadTracks = require('./lib/download-tracks')
 
 const log = console.log
@@ -40,7 +40,7 @@ const init = () => {
 		spinner.text = 'This can take quite a while (~1-20 minutes)'
 	}, 4000)
 
-	findTracks(url).then(youtubeIds => {
+	scrapeTracks(url).then(youtubeIds => {
 		spinner.stop()
 		log(`Found ${youtubeIds.length} tracks. Now downloading…`)
 
