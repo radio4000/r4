@@ -11,7 +11,7 @@
   "author": "internet4000",
   "license": "GPL-3.0-or-later",
   "dependencies": {
-    "args": "^4.0.0",
+    "args": "^5.0.0",
     "command-exists": "^1.2.6",
     "listen-to-youtube-cli": "^1.0.0",
     "prompts": "^0.1.8",
