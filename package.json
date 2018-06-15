@@ -12,11 +12,8 @@
   "license": "GPL-3.0-or-later",
   "dependencies": {
     "args": "^4.0.0",
-    "chalk": "^2.4.1",
     "command-exists": "^1.2.6",
     "listen-to-youtube-cli": "^1.0.0",
-    "nightmare": "^2.2.0",
-    "ora": "^2.1.0",
     "prompts": "^0.1.8",
     "radio4000-sdk": "^0.0.5",
     "speaker": "^0.4.1",
