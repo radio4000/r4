@@ -2,9 +2,9 @@
 
 const args = require('args')
 const {createBackup} = require('radio4000-sdk')
+const commandExists = require('command-exists')
 const downloadTracks = require('./lib/download-tracks')
 const autocompleteChannels = require('./lib/autocomplete-channels')
-const commandExists = require('command-exists')
 
 args
 	.option('destination', 'the path of the folder to download')
@@ -22,7 +22,9 @@ const main = async function() {
 	try {
 		await commandExists('youtube-dl')
 	} catch (err) {
-		console.warn('You need to install youtube-dl to use this. See https://rg3.github.io/youtube-dl/')
+		console.warn(
+			'You need to install youtube-dl. See https://rg3.github.io/youtube-dl/'
+		)
 		return
 	}
 
