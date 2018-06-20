@@ -13,7 +13,8 @@ args
 
 const flags = args.parse(process.argv, {
 	version: false,
-	value: 'channel-slug'
+	value: 'channel-slug',
+	mainColor: ['reset']
 })
 
 let slug = args.sub[0]
