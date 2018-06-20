@@ -3,8 +3,8 @@
 const args = require('args')
 
 args
-	.command('download', 'Download a radio4000.com channel')
-	.command('listen', 'Listen to a radio4000.com channel')
+	.command('download', 'Download a channel')
+	.command('listen', 'Listen to a channel')
 	.example(
 		'r4 download 200ok',
 		`Download the channel at https://radio4000.com/200ok`
@@ -13,6 +13,7 @@ args
 		'r4 listen detecteve',
 		`Play and listen to the channel at https://radio4000.com/detecteve`
 	)
+	.example('r4 <command> help', `Display help for a specific command`)
 
 args.parse(process.argv, {
 	version: false,

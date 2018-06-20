@@ -7,8 +7,9 @@ const {findChannelBySlug, findTracksByChannel} = require('radio4000-sdk')
 const autocompleteChannels = require('./lib/autocomplete-channels')
 
 args
-	.option('search', 'search for a radio')
+	.option('search', 'Enable search mode')
 	.example('r4 listen 200ok', 'Listen to the channel with slug "200ok"')
+	.example('r4 listen --search', 'Search for a radio to listen to')
 
 const flags = args.parse(process.argv, {
 	version: false,

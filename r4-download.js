@@ -7,8 +7,9 @@ const downloadTracks = require('./lib/download-tracks')
 const autocompleteChannels = require('./lib/autocomplete-channels')
 
 args
-	.option('search', 'search for a radio')
+	.option('search', 'Enable search mode')
 	.example('r4 download 200ok', 'Download the channel with the slug "200ok"')
+	.example('r4 download --search', 'Search for a radio to download')
 
 const flags = args.parse(process.argv, {
 	version: false,
