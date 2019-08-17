@@ -25,7 +25,7 @@ if (slug === 'dl') slug = args.sub[1]
 const main = async function() {
 	try {
 		await commandExists('youtube-dl')
-	} catch (err) {
+	} catch (error) {
 		console.warn(
 			'You need to install youtube-dl. See https://rg3.github.io/youtube-dl/'
 		)
@@ -34,7 +34,7 @@ const main = async function() {
 
 	try {
 		await commandExists('ffmpeg')
-	} catch (err) {
+	} catch (error) {
 		console.warn(
 			'You need to install ffmpeg. See https://ffmpeg.org/download.html'
 		)
@@ -53,8 +53,8 @@ const main = async function() {
 		const backup = await createBackup(slug)
 		await downloadTracks(backup.tracks, slug)
 		console.log(`Download complete for channel: ${slug}`)
-	} catch (err) {
-		console.warn(err)
+	} catch (error) {
+		console.warn(error)
 	}
 }
 
