@@ -1,42 +1,45 @@
-NAME
+# NAME
 
 r4 - the Radio4000 CLI
 
 
-USAGE
+# USAGE
 
+```
 r4 download <channel-slug>
 r4 <command> help
 r4 -h, --help
 r4 -v, --version
+```
 
-
-DESCRIPTION
+# DESCRIPTION
 
 r4 is a program for interacting with Radio4000.
 
 
-INSTALLATION
+# INSTALLATION
 
-npm install --global r4
+> Deprecated: `r4` npm package
 
-For downloads to work, make sure youtube-dl is installed on your system:
+For downloads to work, make sure youtube-dl and ffmpeg installed on your system:
 https://github.com/rg3/youtube-dl/#installation.
 
+Prefer `npm` over `yarn`, as the yarn linking is not global with nvm
 
-DEVELOPMENT
+# DEVELOPMENT
 
 1. git clone git@github.com:internet4000/r4.git
 2. cd r4
-3. yarn link
+3. npm link
 
-Linking makes `r4` use your local copy. If you you are changing the path or adding a new binary, remember to run `yarn unlink` and `yarn link` in the project.
+Linking makes `r4` use your local copy. If you you are changing the
+path or adding a new binary, remember to run `npm unlink` and `npm link` in the project.
 
 Lint scripts and run tests with `yarn test`.
 To format scripts, run `yarn prettier`.
 
 
-FURTHER NOTES
+# FURTHER NOTES
 
 If you have `jq` installed, you can actually download the tracks of a channel with this one-liner:
 
