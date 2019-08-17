@@ -13,10 +13,8 @@
   "dependencies": {
     "args": "^5.0.0",
     "command-exists": "^1.2.6",
-    "listen-to-youtube-cli": "^1.0.0",
     "prompts": "^0.1.8",
-    "radio4000-sdk": "^0.0.5",
-    "speaker": "^0.4.1"
+    "radio4000-sdk": "^0.0.5"
   },
   "devDependencies": {
     "ava": "^0.25.0",
@@ -25,8 +23,7 @@
   },
   "bin": {
     "r4": "./r4.js",
-    "r4-download": "./r4-download.js",
-    "r4-play": "./r4-play.js"
+    "r4-download": "./r4-download.js"
   },
   "xo": {
     "prettier": true,
