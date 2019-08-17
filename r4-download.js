@@ -32,6 +32,15 @@ const main = async function() {
 		return
 	}
 
+	try {
+		await commandExists('ffmpeg')
+	} catch (err) {
+		console.warn(
+			'You need to install ffmpeg. See https://ffmpeg.org/download.html'
+		)
+		return
+	}
+
 	if (flags.search) {
 		slug = await autocompleteChannels()
 	}
