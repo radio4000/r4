@@ -26,6 +26,10 @@ https://github.com/rg3/youtube-dl/#installation.
 
 Prefer `npm` over `yarn`, as the yarn linking is not global with nvm
 
+To install r4 as a global npm package from a gitab repository do:
+
+`npm i -g gitlab:internet4000/r4`
+
 # DEVELOPMENT
 
 1. git clone git@github.com:internet4000/r4.git
