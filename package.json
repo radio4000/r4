@@ -27,7 +27,8 @@
   },
   "bin": {
     "r4": "./r4.js",
-    "r4-download": "./r4-download.js"
+    "r4-download": "./r4-download.js",
+    "r4-clean": "./r4-clean.js"
   },
   "xo": {
     "prettier": true,

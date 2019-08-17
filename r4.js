@@ -4,10 +4,12 @@ const args = require('args')
 
 args
 	.command(['download', 'dl'], 'Download a channel')
+	.command(['clean'], 'Clean a channel folder')
 	.example(
-		'r4 download 200ok',
-		`Download the channel at https://radio4000.com/200ok`
+		'r4 download a-channel',
+		`Download the channel at https://radio4000.com/a-channel`
 	)
+	.example('r4 clean a-channel', `Clean all unecessary files in the ./a-channel channel folder`)
 	.example('r4 <command> help', `Display help for a specific command`)
 
 args.parse(process.argv, {
