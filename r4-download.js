@@ -47,7 +47,7 @@ const main = async function() {
 	}
 
 	try {
-		await require('dns').lookup('wikipedia.org', error => {
+		await require('dns').lookup('1.1.1.1', error => {
 			if (error && error.code == "ENOTFOUND") {
         return error
       }
