@@ -14,7 +14,7 @@ const flags = args.parse(process.argv, {
 	mainColor: ['reset']
 })
 
-let slug = args.sub[0]
+let slug = args.sub[0] || ''
 
 const cleanPath = async (folderPath) => {
 	// Remove '' empty string for all files without extension
@@ -28,30 +28,34 @@ const cleanPath = async (folderPath) => {
 		return false
 	})
 
-	if (!filesToClean.length) {
-		console.log('No file had to be cleaned; checked for', extToClean)
-		return true
+	if (filesToClean.length) {
+		filesToClean.forEach(filePath =>{
+			const pathToUnlink = folderPath + filePath
+			fs.unlink(pathToUnlink)
+			console.log('Cleaned', pathToUnlink)
+		})
 	}
 
-	filesToClean.forEach(filePath =>{
-		const pathToUnlink = folderPath + filePath
-		fs.unlink(pathToUnlink)
-		console.log('Cleaned', pathToUnlink)
-	})
-	console.log(`Cleaned ${filesToClean.length} files`)
+	console.log(`${filesToClean.length} files cleaned`)
 }
 
 const main = async function() {
-	const pathToClean = `./${slug}`
-	console.log('Cleaning folder path', pathToClean)
+	const pathToClean = `./${slug}/`
+	if (!slug) {
+		return
+	}
+
+	if (!fs.existsSync(pathToClean)) {
+		console.log(pathToClean, 'is not a channel folder')
+		return
+	}
+
+	console.log('Cleaning channel folder path', pathToClean)
 
 	try {
-		if (fs.existsSync(pathToClean)) {
-			cleanPath(pathToClean)
-		} else {
-			console.log('No channel folder at', pathToClean)
-		}
+		cleanPath(pathToClean)
 	} catch (error) {
+		console.error('Error cleaning folder path', pathToClean)
 	}
 }
 
