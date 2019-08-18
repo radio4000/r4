@@ -5,7 +5,7 @@ const fs = require('fs-extra')
 const path = require('path')
 
 args
-	.option('verbose', 'More outputs to the console')
+	.option('debug', 'More outputs to the console')
 	.example('r4 clean a-channel', 'Download the channel with the slug "a-channel"')
 
 const flags = args.parse(process.argv, {
@@ -15,6 +15,10 @@ const flags = args.parse(process.argv, {
 })
 
 let slug = args.sub[0] || ''
+
+const {
+	debug: debugOutput
+} = flags
 
 const cleanPath = async (folderPath) => {
 	// Remove '' empty string for all files without extension
@@ -32,11 +36,13 @@ const cleanPath = async (folderPath) => {
 		filesToClean.forEach(filePath =>{
 			const pathToUnlink = folderPath + filePath
 			fs.unlink(pathToUnlink)
-			console.log('Cleaned', pathToUnlink)
+			debugOutput && console.log('Cleaned', pathToUnlink)
 		})
+	} else {
+		debugOutput && console.log('0 files to clean')
 	}
 
-	console.log(`${filesToClean.length} files cleaned`)
+	debugOutput && console.log(`${filesToClean.length} files cleaned`)
 }
 
 const main = async function() {
@@ -50,7 +56,7 @@ const main = async function() {
 		return
 	}
 
-	console.log('Cleaning channel folder path', pathToClean)
+	debugOutput && console.log('Cleaning channel folder path', pathToClean)
 
 	try {
 		cleanPath(pathToClean)
