@@ -11,6 +11,7 @@ args
 	.option('search', 'Enable search mode')
 	.option('forceMedia', 'Force redownload of all media, even those marked as mediaNotavailable on a r4 track')
 	.option('force', 'Force redownload and overwrite of all media for this channel')
+	.option('debug', 'Output to the console more information to help debug this software')
 	.example('r4 download 200ok', 'Download the channel with the slug "200ok". Overwriting existing data')
 	.example('r4 download --search', 'Search for a radio to download')
 
@@ -32,9 +33,10 @@ const saveChannelData = async (channelData, backupPath) => {
 const main = async function() {
 	// Get command line flags
 	const {
+		debug: debugOutput,
 		search: showSearch,
 		force: forceDownload,
-		forceMedia: forceMediaAvailableCheck
+		forceMedia: forceMediaAvailableCheck,
 	} = flags
 
 	try {
@@ -96,7 +98,8 @@ const main = async function() {
 	// Save the channels media to files
 	const downloadOptions = {
 		forceMediaAvailableCheck,
-		forceDownload
+		forceDownload,
+		debugOutput
 	}
 	try {
 		await downloadTracks(backup.tracks, slug, downloadOptions)
