@@ -9,7 +9,9 @@ const autocompleteChannels = require('./lib/autocomplete-channels')
 
 args
 	.option('search', 'Enable search mode')
-	.example('r4 download 200ok', 'Download the channel with the slug "200ok"')
+	.option('forceMedia', 'Force redownload of all media, even those marked as mediaNotavailable on a r4 track')
+	.option('force', 'Force redownload and overwrite of all media for this channel')
+	.example('r4 download 200ok', 'Download the channel with the slug "200ok". Overwriting existing data')
 	.example('r4 download --search', 'Search for a radio to download')
 
 const flags = args.parse(process.argv, {
@@ -28,6 +30,13 @@ const saveChannelData = async (channelData, backupPath) => {
 }
 
 const main = async function() {
+	// Get command line flags
+	const {
+		search: showSearch,
+		force: forceDownload,
+		forceMedia: forceMediaAvailableCheck
+	} = flags
+
 	try {
 		await commandExists('youtube-dl')
 	} catch (error) {
@@ -58,7 +67,7 @@ const main = async function() {
 		return
 	}
 
-	if (flags.search) {
+	if (showSearch) {
 		slug = await autocompleteChannels()
 	}
 
@@ -85,8 +94,12 @@ const main = async function() {
 	}
 
 	// Save the channels media to files
+	const downloadOptions = {
+		forceMediaAvailableCheck,
+		forceDownload
+	}
 	try {
-		await downloadTracks(backup.tracks, slug)
+		await downloadTracks(backup.tracks, slug, downloadOptions)
 		console.log(`Finished download for channel: ${slug}`)
 	} catch (error) {
 		console.warn(error)
