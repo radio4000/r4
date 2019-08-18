@@ -2,7 +2,7 @@
 
 const args = require('args')
 const fs = require('fs-extra')
-const os = require("os");
+const os = require('os')
 
 args
 	.option('debug', 'More outputs to the console')
