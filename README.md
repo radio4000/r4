@@ -19,8 +19,6 @@ r4 is a program for interacting with Radio4000.
 
 # INSTALLATION
 
-> Deprecated: `r4` npm package
-
 For downloads to work, make sure youtube-dl and ffmpeg installed on your system:
 https://github.com/rg3/youtube-dl/#installation.
 
