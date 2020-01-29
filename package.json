@@ -8,7 +8,15 @@
     "test": "xo && ava",
     "prettier": "prettier --write '*.js' 'lib/**/*.js'"
   },
-  "author": "internet4000",
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitlab.com/internet4000/r4.git"
+  },
+  "author": "internet4000 and contributors",
+  "bugs": {
+    "url": "https://gitlab.com/internet4000/r4/issues"
+  },
+  "homepage": "https://gitlab.com/internet4000/r4",
   "license": "GPL-3.0-or-later",
   "dependencies": {
     "args": "^5.0.1",
