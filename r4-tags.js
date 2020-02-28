@@ -50,13 +50,16 @@ async function readChannelData(channelSlug) {
 const showChannelTags = (channelData) => {
 	if (!channelData || !channelData.tracks.length) return
 	const t = uniqueTagsFromList(channelData.tracks)
-	t.tags.forEach(tag => console.log(tag))
+	t.tags
+		.sort((a, b) => a.localeCompare(b))
+		.forEach(tag => console.log(tag))
 }
 
 const showSortedChannelTags = (channelData) => {
 	if (!channelData || !channelData.tracks.length) return
 	const t = uniqueTagsFromList(channelData.tracks)
-	t.sortedTags.forEach(tag => console.log(tag[1], tag[0]))
+	t.sortedTags
+		.forEach(tag => console.log(tag[1], tag[0]))
 }
 
 const generateFolderStructure = async ({tracks, slug: channelSlug}) => {
@@ -97,7 +100,7 @@ const generateFolderStructure = async ({tracks, slug: channelSlug}) => {
 		}
 
 	})
-	console.log(`Moved ${tracksWithTags.length} tracks to the "./${channelSlug}/tags" folder`)
+	console.log(`Hard linked ${tracksWithTags.length} tracks to the "./${channelSlug}/tags" folder`)
 }
 
 const main = async function() {
@@ -110,11 +113,11 @@ const main = async function() {
 
 	if (!chanelData) return
 
-	// when no flats and jut a channel, show all tags
+	// when no flags, and jut a channel, show a list of all tags
 	if (Object.keys(flags).length === 0) {
 		return showChannelTags(chanelData)
 	}
-	// if flag is sorted, show a sorted list of tracks
+	// if flag is sorted, show a sorted list of all tags
 	if (sorted) {
 		return showSortedChannelTags(chanelData)
 	}
