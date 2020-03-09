@@ -37,8 +37,8 @@ To install r4 as a global npm package from a gitab repository do:
 Linking makes `r4` use your local copy. If you you are changing the
 path or adding a new binary, remember to run `npm unlink` and `npm link` in the project.
 
-Lint scripts and run tests with `yarn test`.
-To format scripts, run `yarn prettier`.
+Lint scripts and run tests with `npm run test`.
+To format scripts, run `npm run prettier`.
 
 
 # FURTHER NOTES
