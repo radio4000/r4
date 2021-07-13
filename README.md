@@ -2,7 +2,6 @@
 
 r4 - the Radio4000 CLI
 
-
 # USAGE
 
 ```
@@ -16,17 +15,24 @@ r4 -v, --version
 
 r4 is a program for interacting with Radio4000.
 
-
 # INSTALLATION
 
-For downloads to work, make sure youtube-dl and ffmpeg installed on your system:
-https://github.com/rg3/youtube-dl/#installation.
+For downloads to work, make sure
+`[youtube-dl](https://github.com/rg3/youtube-dl/)` and `ffmpeg`
+installed on your system.
 
-Prefer `npm` over `yarn`, as the yarn linking is not global with nvm
+Prefer `npm` (over `yarn`, as the yarn linking is not global with nvm).
+
+## From npm
+
+- `npm i -g r4`, to install r4 globally
+- `r4` should now be available as a command in your terminal/shell
+
+## From gitlab directly
 
 To install r4 as a global npm package from a gitab repository do:
 
-`npm i -g gitlab:internet4000/r4`
+- `npm i -g gitlab:internet4000/r4`
 
 # DEVELOPMENT
 
@@ -45,8 +51,11 @@ To format scripts, run `npm run prettier`.
 
 If you have `jq` installed, you can actually download the tracks of a channel with this one-liner:
 
+```
 curl https://api.radio4000.com/v1/channels/-JYZtdQfLSl6sUpyIJx6/tracks | jq -r '.[] | .url' | youtube-dl -ixa /dev/stdin --audio-format mp3
-
+```
 ... if you don't have `jq`, but have `python`, try this:
 
+```
 curl https://api.radio4000.com/v1/channels/-JYZtdQfLSl6sUpyIJx6/tracks | python -m json.tool | grep -oP '"url": "\K(.+)",' | youtube-dl -a /dev/stdin --extract-audio --audio-format mp3
+```

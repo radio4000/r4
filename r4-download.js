@@ -103,7 +103,7 @@ const main = async function() {
 		debugOutput
 	}
 	try {
-		await downloadTracks(backup.tracks, slug, downloadOptions)
+		await downloadTracks(backup.tracks.reverse(), slug, downloadOptions)
 		console.log(`Finished download for channel: ${slug}`)
 	} catch (error) {
 		console.warn(error)
