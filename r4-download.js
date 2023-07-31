@@ -98,8 +98,9 @@ const main = async function() {
 
 	// Save the channels media to files
 	try {
-		const {failures} = await downloadTracks(backup.tracks.reverse(), slug, {forceDownload, debug, dryrun})
+		const {failures, toDownload} = await downloadTracks(backup.tracks.reverse(), slug, {forceDownload, debug, dryrun})
 		console.log(`Finished download for channel: ${slug}`)
+		console.log(`${failures.length}/${toDownload.length} failed to download. See ./${slug}/${slug}-logs.json for details.`)
 		await fs.writeFile(`./${slug}/${slug}-logs.json`, JSON.stringify(failures, null, 1))
 	} catch (error) {
 		console.warn(error)

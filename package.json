@@ -50,5 +50,9 @@
     "rules": {
       "prefer-destructuring": 0
     }
+  },
+  "prettier": {
+    "singleQuote": true,
+    "semi": false
   }
 }
