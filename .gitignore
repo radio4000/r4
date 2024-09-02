@@ -1,3 +1,5 @@
-downloads
-node_modules
+downloads/
+node_modules/
+oskar/
 yarn-error.log
+.DS_Store
