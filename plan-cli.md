@@ -34,9 +34,11 @@ R4(1)                     User Commands                    R4(1)
 - [x] logout.js - Sign out from Radio4000
 - [x] whoami.js - Show current authenticated user
 
+### Download Commands (cli/commands/channel/)
+- [x] download.js - Download channel tracks using yt-dlp
+
 ### Future Porcelain Commands
 - [ ] add.js - Smart track addition with URL metadata fetching
-- [ ] download.js - Download channel tracks using yt-dlp (reuse from old CLI)
 
 ## Data Layer (cli/lib/)
 
@@ -156,6 +158,11 @@ BACKLOG
        Search operations (or use: r4 track list --sql | rg <pattern>)
        r4 track search <query>
        r4 channel search <query>
+
+       Download improvements:
+       - Add concurrency control (p-limit) for batch downloads
+       - Add retry logic for failed downloads
+       - Add premium/poToken support for YouTube Music
 
 EXAMPLES
        # View channels (from v2 or bundled v1)
