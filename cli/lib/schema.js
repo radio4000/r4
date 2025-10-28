@@ -11,8 +11,8 @@ export const channelSchema = z.object({
 	longitude: z.number().optional(),
 	track_count: z.number().int().nonnegative().optional(),
 	firebase_id: z.string().optional(),
-	created_at: z.iso.datetime({ offset: true }).optional(),
-	updated_at: z.iso.datetime({ offset: true }).optional(),
+	created_at: z.iso.datetime({offset: true}).optional(),
+	updated_at: z.iso.datetime({offset: true}).optional(),
 	source: z.enum(['v1', 'v2']).default('v2')
 })
 
@@ -28,9 +28,11 @@ export const trackSchema = z.preprocess(
 		slug: z.string(), // channel slug
 		title: z.string().min(1).max(500),
 		url: z.string().url(),
+		description: z.string().default(''),
 		discogs_url: z.string().url().nullish(),
-		created_at: z.iso.datetime({ offset: true }).optional(),
-		updated_at: z.iso.datetime({ offset: true }).optional(),
+		tags: z.array(z.string()).default([]),
+		created_at: z.iso.datetime({offset: true}).optional(),
+		updated_at: z.iso.datetime({offset: true}).optional(),
 		source: z.enum(['v1', 'v2']).default('v2')
 	})
 )

@@ -1,6 +1,11 @@
 import {z} from 'zod'
 import {getChannel, listTracks} from '../lib/data.js'
-import {downloadChannel} from '../lib/download.js'
+import {
+	downloadChannel,
+	writeChannelAbout,
+	writeChannelImageUrl,
+	writeTracksPlaylist
+} from '../lib/download.js'
 
 export default {
 	description: 'Download all tracks from a channel',
@@ -57,7 +62,22 @@ export default {
 		const tracks = await listTracks({channelSlugs: [slug], limit: flags.limit})
 
 		console.log(`Channel: ${channel.name} (@${channel.slug})`)
-		console.log(`Folder: ${folderPath}`)
+		console.log()
+
+		// Write channel context files (unless dry run)
+		if (!flags.dryRun) {
+			const {mkdir} = await import('node:fs/promises')
+			await mkdir(folderPath, {recursive: true})
+
+			console.log(`${folderPath}/`)
+			await writeChannelAbout(channel, tracks, folderPath, {debug: flags.debug})
+			console.log('├── ABOUT.txt')
+			await writeChannelImageUrl(channel, folderPath, {debug: flags.debug})
+			console.log('├── image.url')
+			await writeTracksPlaylist(tracks, folderPath, {debug: flags.debug})
+			console.log(`└── tracks.m3u (try: mpv ${folderPath}/tracks.m3u)`)
+			console.log()
+		}
 
 		// Download
 		const result = await downloadChannel(tracks, folderPath, {

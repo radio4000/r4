@@ -1,6 +1,6 @@
 import {spawn} from 'node:child_process'
 import {existsSync} from 'node:fs'
-import {mkdir} from 'node:fs/promises'
+import {mkdir, utimes, writeFile} from 'node:fs/promises'
 import ffmetadata from 'ffmetadata'
 import filenamify from 'filenamify'
 import getArtistTitle from 'get-artist-title'
@@ -66,6 +66,16 @@ export async function downloadBatch(tracks, folderPath, options = {}) {
 			if (writeMetadata) {
 				await writeTrackMetadata(track, {debug})
 			}
+
+			// Write metadata .txt file
+			await writeTrackMetadataFile(track, {debug})
+
+			// Set timestamps for audio file
+			await setFileTimestamps(track.filepath, track, {debug})
+
+			// Set timestamps for .txt file
+			const txtFilepath = track.filepath.replace(/\.[^.]+$/, '.txt')
+			await setFileTimestamps(txtFilepath, track, {debug})
 
 			console.log(progress, 'Downloaded:', track.filepath)
 			successes.push(track)
@@ -205,10 +215,10 @@ export async function writeTrackMetadata(track, {debug = false} = {}) {
 		console.log('Could not parse artist/title from:', track.title)
 	}
 
-	// Build description from track body and discogs URL
+	// Build description from track description and discogs URL
 	let description = ''
-	if (track.body || track.discogs_url) {
-		const parts = [track.body, track.discogs_url].filter(Boolean)
+	if (track.description || track.discogs_url) {
+		const parts = [track.description, track.discogs_url].filter(Boolean)
 		description = parts.join('; ')
 	}
 
@@ -228,6 +238,190 @@ export async function writeTrackMetadata(track, {debug = false} = {}) {
 			resolve()
 		})
 	})
+}
+
+/**
+ * Write track metadata as a .txt file
+ * Creates a human-readable text file with track information
+ */
+export async function writeTrackMetadataFile(track, {debug = false} = {}) {
+	if (!track.filepath) {
+		throw new Error('Track filepath required')
+	}
+
+	// Create .txt filepath (same name, different extension)
+	const txtFilepath = track.filepath.replace(/\.[^.]+$/, '.txt')
+
+	// Build description section
+	let descriptionSection = ''
+	if (track.description) {
+		descriptionSection = `\nDescription:\n${track.description}`
+	}
+
+	// Build discogs section
+	let discogsSection = ''
+	if (track.discogs_url) {
+		discogsSection = `\nDiscogs: ${track.discogs_url}`
+	}
+
+	// Build tags section
+	let tagsSection = ''
+	if (track.tags && track.tags.length > 0) {
+		tagsSection = `\nTags: ${track.tags.map((t) => '#' + t).join(' ')}`
+	}
+
+	// Format timestamps
+	let timestampSection = ''
+	if (track.created_at) {
+		const created = new Date(track.created_at).toLocaleString()
+		timestampSection += `\nAdded: ${created}`
+	}
+	if (track.updated_at) {
+		const updated = new Date(track.updated_at).toLocaleString()
+		timestampSection += `\nUpdated: ${updated}`
+	}
+
+	// Build complete content
+	const content = `Title: ${track.title}
+URL: ${track.url}${descriptionSection}${discogsSection}${tagsSection}${timestampSection}
+`
+
+	await writeFile(txtFilepath, content, 'utf-8')
+
+	if (debug) {
+		console.log('Wrote metadata file:', txtFilepath)
+	}
+
+	return txtFilepath
+}
+
+/**
+ * Set file timestamps to match track dates
+ * Sets mtime to updated_at and atime to created_at
+ */
+export async function setFileTimestamps(filepath, track, {debug = false} = {}) {
+	if (!existsSync(filepath)) {
+		throw new Error(`File not found: ${filepath}`)
+	}
+
+	// Use track timestamps if available, otherwise use current time
+	const atime = track.updated_at ? new Date(track.updated_at) : new Date()
+	const mtime = track.created_at ? new Date(track.created_at) : new Date()
+
+	await utimes(filepath, atime, mtime)
+
+	if (debug) {
+		console.log('Set timestamps:', filepath)
+	}
+}
+
+// ============================================================================
+// Channel Context Files
+// ============================================================================
+
+/**
+ * Write channel ABOUT.txt file
+ * Creates a human-readable channel information file
+ */
+export async function writeChannelAbout(
+	channel,
+	tracks,
+	folderPath,
+	{debug = false} = {}
+) {
+	const filepath = `${folderPath}/ABOUT.txt`
+
+	const titleLine = channel.name || 'Untitled Channel'
+	const underline = '='.repeat(titleLine.length)
+
+	const description = channel.description || 'No description available.'
+
+	const createdDate = channel.created_at
+		? new Date(channel.created_at).toLocaleDateString()
+		: 'Unknown'
+
+	const websiteSection = channel.url ? `  Website: ${channel.url}\n` : ''
+
+	const content = `${titleLine}
+${underline}
+
+${description}
+
+Stats:
+  Tracks: ${tracks.length}
+  Created: ${createdDate}
+${websiteSection}
+Quick Access:
+  image.url     # Channel image URL
+  tracks.m3u    # Playlist for streaming
+  <track>.txt   # Individual track metadata
+`
+
+	await writeFile(filepath, content, 'utf-8')
+
+	if (debug) {
+		console.log('Wrote ABOUT.txt:', filepath)
+	}
+
+	return filepath
+}
+
+/**
+ * Write channel image.url file
+ * Creates a file containing the channel's image URL
+ */
+export async function writeChannelImageUrl(
+	channel,
+	folderPath,
+	{debug = false} = {}
+) {
+	const filepath = `${folderPath}/image.url`
+
+	let content = ''
+	if (channel.image) {
+		// If it's already a full URL (Cloudinary), use as-is
+		if (channel.image.startsWith('http')) {
+			content = `${channel.image}\n`
+		} else {
+			// Otherwise construct Supabase storage URL
+			// Note: We'd need the supabase URL from config, for now just store the path
+			content = `${channel.image}\n`
+		}
+	}
+
+	await writeFile(filepath, content, 'utf-8')
+
+	if (debug) {
+		console.log('Wrote image.url:', filepath)
+	}
+
+	return filepath
+}
+
+/**
+ * Write tracks.m3u playlist file
+ * Creates an M3U playlist with all track URLs
+ */
+export async function writeTracksPlaylist(
+	tracks,
+	folderPath,
+	{debug = false} = {}
+) {
+	const filepath = `${folderPath}/tracks.m3u`
+
+	let content = '#EXTM3U\n'
+	for (const track of tracks) {
+		content += `#EXTINF:-1,${track.title || 'Untitled'}\n`
+		content += `${track.url}\n`
+	}
+
+	await writeFile(filepath, content, 'utf-8')
+
+	if (debug) {
+		console.log('Wrote tracks.m3u:', filepath)
+	}
+
+	return filepath
 }
 
 // ============================================================================
