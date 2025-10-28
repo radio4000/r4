@@ -9,8 +9,8 @@ List all downloaded channels in the current directory.
 
 **Usage:**
 ```bash
-node cli/index.js channel list
-node cli/index.js channel list --sql
+r4 channel list
+r4 channel list --json
 ```
 
 **Output:** Lists all directories that contain a matching `.json` file (e.g., `test-channel/test-channel.json`).
@@ -20,9 +20,9 @@ View detailed information about a specific channel.
 
 **Usage:**
 ```bash
-node cli/index.js channel view test-channel
-node cli/index.js channel view test-channel --sql
-node cli/index.js channel view test-channel --tracks-only
+r4 channel view test-channel
+r4 channel view test-channel --sql
+r4 channel view test-channel --tracks-only
 ```
 
 **Options:**
@@ -36,16 +36,16 @@ A test channel has been created at `test-channel/test-channel.json` for testing 
 **Examples:**
 ```bash
 # List channels (JSON output)
-node cli/index.js channel list
+r4 channel list
 
 # View a channel
-node cli/index.js channel view test-channel
+r4 channel view test-channel
 
 # View only tracks
-node cli/index.js channel view test-channel --tracks-only
+r4 channel view test-channel --tracks-only
 
 # SQL output
-node cli/index.js channel list --sql
+r4 channel list --sql
 ```
 
 ## Implementation Notes

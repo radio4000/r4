@@ -62,18 +62,14 @@ export async function downloadBatch(tracks, folderPath, options = {}) {
 
 			await downloadTrack(track, folderPath, {debug})
 
-			// Write metadata if enabled
 			if (writeMetadata) {
 				await writeTrackMetadata(track, {debug})
 			}
 
-			// Write metadata .txt file
 			await writeTrackMetadataFile(track, {debug})
 
-			// Set timestamps for audio file
 			await setFileTimestamps(track.filepath, track, {debug})
 
-			// Set timestamps for .txt file
 			const txtFilepath = track.filepath.replace(/\.[^.]+$/, '.txt')
 			await setFileTimestamps(txtFilepath, track, {debug})
 

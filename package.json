@@ -5,8 +5,8 @@
 	"type": "module",
 	"main": "r4.js",
 	"scripts": {
-		"start": "node . ",
-		"check": "biome check --write"
+		"check": "biome check --write",
+    "test": "bun test --only-failures"
 	},
 	"repository": {
 		"type": "git",
@@ -29,6 +29,6 @@
 		"zod": "^4.1.12"
 	},
 	"bin": {
-		"r4": "./cli/index.js"
+		"r4": "./cli/main.js"
 	}
 }

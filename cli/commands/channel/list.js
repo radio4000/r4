@@ -16,14 +16,14 @@ export default {
 		}
 	},
 
-	handler: async ({flags}) => {
+	handler: async (input) => {
 		// Use default limit of 100 if not specified
-		const limit = flags.limit ?? 100
+		const limit = input.limit ?? 100
 
 		return {
 			data: await listChannels({limit}),
-			format: flags.sql ? 'sql' : 'json',
-			formatOptions: flags.sql ? {table: 'channels'} : undefined
+			format: input.sql ? 'sql' : 'json',
+			formatOptions: input.sql ? {table: 'channels'} : undefined
 		}
 	},
 

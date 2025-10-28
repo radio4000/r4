@@ -20,14 +20,14 @@ export default {
 		}
 	},
 
-	handler: async ({args, flags}) => {
-		const ids = Array.isArray(args.id) ? args.id : [args.id]
+	handler: async (input) => {
+		const ids = Array.isArray(input.id) ? input.id : [input.id]
 		const results = await Promise.all(ids.map((id) => deleteTrack(id)))
 
 		return {
 			data: results.length === 1 ? results[0] : results,
-			format: flags.sql ? 'sql' : 'json',
-			formatOptions: flags.sql ? {table: 'tracks'} : undefined
+			format: input.sql ? 'sql' : 'json',
+			formatOptions: input.sql ? {table: 'tracks'} : undefined
 		}
 	},
 

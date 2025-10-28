@@ -25,14 +25,14 @@ export default {
 		slug: z.union([z.string(), z.array(z.string())])
 	}),
 
-	handler: async ({args, flags}) => {
-		const slugs = Array.isArray(args.slug) ? args.slug : [args.slug]
+	handler: async (input) => {
+		const slugs = Array.isArray(input.slug) ? input.slug : [input.slug]
 		const channels = await Promise.all(slugs.map((slug) => getChannel(slug)))
 
 		return {
 			data: channels.length === 1 ? channels[0] : channels,
-			format: flags.sql ? 'sql' : 'json',
-			formatOptions: flags.sql ? {table: 'channels'} : undefined
+			format: input.sql ? 'sql' : 'json',
+			formatOptions: input.sql ? {table: 'channels'} : undefined
 		}
 	},
 

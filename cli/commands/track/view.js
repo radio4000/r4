@@ -25,14 +25,14 @@ export default {
 		id: z.union([z.string(), z.array(z.string())])
 	}),
 
-	handler: async ({args, flags}) => {
-		const ids = Array.isArray(args.id) ? args.id : [args.id]
+	handler: async (input) => {
+		const ids = Array.isArray(input.id) ? input.id : [input.id]
 		const tracks = await Promise.all(ids.map((id) => getTrack(id)))
 
 		return {
 			data: tracks.length === 1 ? tracks[0] : tracks,
-			format: flags.sql ? 'sql' : 'json',
-			formatOptions: flags.sql ? {table: 'tracks'} : undefined
+			format: input.sql ? 'sql' : 'json',
+			formatOptions: input.sql ? {table: 'tracks'} : undefined
 		}
 	},
 

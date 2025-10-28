@@ -16,12 +16,12 @@ export default {
 			default: true
 		}
 	},
-	handler: async ({args, flags}) => {
+	handler: async (input) => {
 		return {
 			success: true,
 			command: 'channel:view',
-			slug: args.slug,
-			json: flags.json
+			slug: input.slug,
+			json: input.json
 		}
 	}
 }

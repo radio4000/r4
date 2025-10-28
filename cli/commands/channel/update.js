@@ -32,13 +32,13 @@ export default {
 		}
 	},
 
-	handler: async ({args, flags}) => {
-		const slugs = Array.isArray(args.slug) ? args.slug : [args.slug]
+	handler: async (input) => {
+		const slugs = Array.isArray(input.slug) ? input.slug : [input.slug]
 
 		const updates = {}
-		if (flags.name) updates.name = flags.name
-		if (flags.description !== undefined) updates.description = flags.description
-		if (flags.image !== undefined) updates.image = flags.image
+		if (input.name) updates.name = input.name
+		if (input.description !== undefined) updates.description = input.description
+		if (input.image !== undefined) updates.image = input.image
 
 		if (Object.keys(updates).length === 0) {
 			throw new Error('At least one field must be provided for update')
@@ -50,8 +50,8 @@ export default {
 
 		return {
 			data: channels.length === 1 ? channels[0] : channels,
-			format: flags.sql ? 'sql' : 'json',
-			formatOptions: flags.sql ? {table: 'channels'} : undefined
+			format: input.sql ? 'sql' : 'json',
+			formatOptions: input.sql ? {table: 'channels'} : undefined
 		}
 	},
 

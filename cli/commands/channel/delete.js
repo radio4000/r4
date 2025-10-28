@@ -25,14 +25,14 @@ export default {
 		}
 	},
 
-	handler: async ({args, flags}) => {
-		const slugs = Array.isArray(args.slug) ? args.slug : [args.slug]
+	handler: async (input) => {
+		const slugs = Array.isArray(input.slug) ? input.slug : [input.slug]
 		const results = await Promise.all(slugs.map((slug) => deleteChannel(slug)))
 
 		return {
 			data: results.length === 1 ? results[0] : results,
-			format: flags.sql ? 'sql' : 'json',
-			formatOptions: flags.sql ? {table: 'channels'} : undefined
+			format: input.sql ? 'sql' : 'json',
+			formatOptions: input.sql ? {table: 'channels'} : undefined
 		}
 	},
 

@@ -54,19 +54,19 @@ export default {
 		}
 	},
 
-	handler: async ({flags}) => {
-		const channelSlugs = flags.channel && [flags.channel].flat()
-		const format = flags.format || 'text'
+	handler: async (input) => {
+		const channelSlugs = input.channel && [input.channel].flat()
+		const format = input.format || 'text'
 
 		const tracks = await listTracks({
 			channelSlugs,
-			limit: flags.limit
+			limit: input.limit
 		})
 
 		// For text format, return formatted summary
 		if (format === 'text') {
 			return {
-				data: formatTrackSummary(tracks, flags.limit),
+				data: formatTrackSummary(tracks, input.limit),
 				format: 'text'
 			}
 		}

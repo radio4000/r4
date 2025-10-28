@@ -40,9 +40,9 @@ export default {
 		'r4 search "electronic music" --tracks',
 		'r4 search ambient --json'
 	],
-	async handler({args, flags}) {
-		const query = args.query
-		const {channels, tracks, limit, json} = flags
+	async handler(input) {
+		const query = input.query
+		const {channels, tracks, limit, json} = input
 
 		// Validate: can't specify both channels and tracks
 		if (channels && tracks) {

@@ -40,20 +40,20 @@ export default {
 		.pick({slug: true, name: true, description: true, image: true})
 		.partial({description: true, image: true}),
 
-	handler: async ({args, flags}) => {
+	handler: async (input) => {
 		const channelData = {
-			slug: args.slug,
-			name: flags.name,
-			description: flags.description || '',
-			image: flags.image || ''
+			slug: input.slug,
+			name: input.name,
+			description: input.description || '',
+			image: input.image || ''
 		}
 
 		const channel = await createChannel(channelData)
 
 		return {
 			data: channel,
-			format: flags.sql ? 'sql' : 'json',
-			formatOptions: flags.sql ? {table: 'channels'} : undefined
+			format: input.sql ? 'sql' : 'json',
+			formatOptions: input.sql ? {table: 'channels'} : undefined
 		}
 	},
 

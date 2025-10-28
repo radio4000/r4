@@ -28,12 +28,12 @@ export default {
 		}
 	},
 
-	handler: async ({args, flags}) => {
-		const ids = Array.isArray(args.id) ? args.id : [args.id]
+	handler: async (input) => {
+		const ids = Array.isArray(input.id) ? input.id : [input.id]
 
 		const updates = {}
-		if (flags.title) updates.title = flags.title
-		if (flags.url) updates.url = flags.url
+		if (input.title) updates.title = input.title
+		if (input.url) updates.url = input.url
 
 		if (Object.keys(updates).length === 0) {
 			throw new Error('At least one field must be provided for update')
@@ -43,8 +43,8 @@ export default {
 
 		return {
 			data: tracks.length === 1 ? tracks[0] : tracks,
-			format: flags.sql ? 'sql' : 'json',
-			formatOptions: flags.sql ? {table: 'tracks'} : undefined
+			format: input.sql ? 'sql' : 'json',
+			formatOptions: input.sql ? {table: 'tracks'} : undefined
 		}
 	},
 

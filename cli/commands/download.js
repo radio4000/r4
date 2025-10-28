@@ -53,38 +53,38 @@ export default {
 		slug: z.string().min(1)
 	}),
 
-	handler: async ({args, flags}) => {
-		const {slug} = args
-		const folderPath = flags.output || `./downloads/${slug}`
+	handler: async (input) => {
+		const {slug} = input
+		const folderPath = input.output || `./downloads/${slug}`
 
 		// Get channel and tracks
 		const channel = await getChannel(slug)
-		const tracks = await listTracks({channelSlugs: [slug], limit: flags.limit})
+		const tracks = await listTracks({channelSlugs: [slug], limit: input.limit})
 
 		console.log(`Channel: ${channel.name} (@${channel.slug})`)
 		console.log()
 
 		// Write channel context files (unless dry run)
-		if (!flags.dryRun) {
+		if (!input.dryRun) {
 			const {mkdir} = await import('node:fs/promises')
 			await mkdir(folderPath, {recursive: true})
 
 			console.log(`${folderPath}/`)
-			await writeChannelAbout(channel, tracks, folderPath, {debug: flags.debug})
+			await writeChannelAbout(channel, tracks, folderPath, {debug: input.debug})
 			console.log('├── ABOUT.txt')
-			await writeChannelImageUrl(channel, folderPath, {debug: flags.debug})
+			await writeChannelImageUrl(channel, folderPath, {debug: input.debug})
 			console.log('├── image.url')
-			await writeTracksPlaylist(tracks, folderPath, {debug: flags.debug})
+			await writeTracksPlaylist(tracks, folderPath, {debug: input.debug})
 			console.log(`└── tracks.m3u (try: mpv ${folderPath}/tracks.m3u)`)
 			console.log()
 		}
 
 		// Download
 		const result = await downloadChannel(tracks, folderPath, {
-			force: flags.force,
-			dryRun: flags.dryRun,
-			debug: flags.debug,
-			writeMetadata: !flags.noMetadata
+			force: input.force,
+			dryRun: input.dryRun,
+			debug: input.debug,
+			writeMetadata: !input.noMetadata
 		})
 
 		console.log()

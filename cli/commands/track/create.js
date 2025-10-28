@@ -1,5 +1,5 @@
+import {z} from 'zod'
 import {createTrack} from '../../lib/data.js'
-import {trackSchema} from '../../lib/schema.js'
 
 export default {
 	description: 'Create a new track',
@@ -27,23 +27,25 @@ export default {
 		}
 	},
 
-	validate: trackSchema
-		.pick({title: true, url: true})
-		.extend({channel: trackSchema.shape.slug}),
+	validate: z.object({
+		channel: z.string().min(1),
+		title: z.string().min(1).max(500),
+		url: z.string().url()
+	}),
 
-	handler: async ({flags}) => {
+	handler: async (input) => {
 		const trackData = {
-			slug: flags.channel,
-			title: flags.title,
-			url: flags.url
+			slug: input.channel,
+			title: input.title,
+			url: input.url
 		}
 
 		const track = await createTrack(trackData)
 
 		return {
 			data: track,
-			format: flags.sql ? 'sql' : 'json',
-			formatOptions: flags.sql ? {table: 'tracks'} : undefined
+			format: input.sql ? 'sql' : 'json',
+			formatOptions: input.sql ? {table: 'tracks'} : undefined
 		}
 	},
 

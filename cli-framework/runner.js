@@ -199,25 +199,26 @@ export async function runCommand(command, argv = [], context = {}) {
 		// Check for conflicting options
 		checkConflicts(command.options, flags)
 
+		// Merge args and flags for validation and handler
+		const mergedInput = {...args, ...flags}
+
 		// Run validation schema if provided
-		if (command.validate) {
-			try {
-				command.validate.parse(args)
-			} catch (error) {
-				throw new CLIError(
-					ErrorTypes.INVALID_ARGUMENT,
-					`Validation failed: ${error.message}`,
-					{zodError: error}
-				)
-			}
-		}
+		const validatedInput = command.validate
+			? (() => {
+					try {
+						return command.validate.parse(mergedInput)
+					} catch (error) {
+						throw new CLIError(
+							ErrorTypes.INVALID_ARGUMENT,
+							`Validation failed: ${error.message}`,
+							{zodError: error}
+						)
+					}
+				})()
+			: mergedInput
 
 		// Execute handler
-		const result = await command.handler({
-			args,
-			flags,
-			context
-		})
+		const result = await command.handler(validatedInput, {context})
 
 		return result
 	} catch (error) {

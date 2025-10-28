@@ -9,7 +9,7 @@ export default {
 			parse: (val) => parseInt(val, 10)
 		}
 	},
-	handler: async ({flags}) => {
-		return {success: true, command: 'channel:list', limit: flags.limit}
+	handler: async (input) => {
+		return {success: true, command: 'channel:list', limit: input.limit}
 	}
 }

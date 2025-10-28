@@ -9,7 +9,7 @@ describe('runCommand - Positional Arguments', () => {
 			description: 'Test',
 			args: [{name: 'slug', required: true, multiple: false}],
 			options: {},
-			handler: async ({args}) => args
+			handler: async (input) => input
 		}
 
 		const result = await runCommand(command, ['ko002'])
@@ -24,7 +24,7 @@ describe('runCommand - Positional Arguments', () => {
 				{name: 'second', required: true, multiple: false}
 			],
 			options: {},
-			handler: async ({args}) => args
+			handler: async (input) => input
 		}
 
 		const result = await runCommand(command, ['foo', 'bar'])
@@ -36,7 +36,7 @@ describe('runCommand - Positional Arguments', () => {
 			description: 'Test',
 			args: [{name: 'slugs', required: true, multiple: true}],
 			options: {},
-			handler: async ({args}) => args
+			handler: async (input) => input
 		}
 
 		const result = await runCommand(command, ['ko002', 'oskar', 'test'])
@@ -48,7 +48,7 @@ describe('runCommand - Positional Arguments', () => {
 			description: 'Test',
 			args: [{name: 'slug', required: false, multiple: false}],
 			options: {},
-			handler: async ({args}) => args
+			handler: async (input) => input
 		}
 
 		const result = await runCommand(command, [])
@@ -60,7 +60,7 @@ describe('runCommand - Positional Arguments', () => {
 			description: 'Test',
 			args: [{name: 'slug', required: false, multiple: false}],
 			options: {},
-			handler: async ({args}) => args
+			handler: async (input) => input
 		}
 
 		const result = await runCommand(command, ['ko002'])
@@ -108,7 +108,7 @@ describe('runCommand - Positional Arguments', () => {
 			description: 'Test',
 			args: [{name: 'slugs', required: false, multiple: true}],
 			options: {},
-			handler: async ({args}) => args
+			handler: async (input) => input
 		}
 
 		const result = await runCommand(command, [])
@@ -124,7 +124,7 @@ describe('runCommand - Options (Flags)', () => {
 			options: {
 				json: {type: 'boolean', description: 'Output JSON'}
 			},
-			handler: async ({flags}) => flags
+			handler: async (input) => input
 		}
 
 		const result = await runCommand(command, ['--json'])
@@ -138,7 +138,7 @@ describe('runCommand - Options (Flags)', () => {
 			options: {
 				format: {type: 'string', description: 'Output format'}
 			},
-			handler: async ({flags}) => flags
+			handler: async (input) => input
 		}
 
 		const result = await runCommand(command, ['--format', 'json'])
@@ -152,7 +152,7 @@ describe('runCommand - Options (Flags)', () => {
 			options: {
 				json: {type: 'boolean', description: 'Output JSON', default: true}
 			},
-			handler: async ({flags}) => flags
+			handler: async (input) => input
 		}
 
 		const result = await runCommand(command, [])
@@ -170,7 +170,7 @@ describe('runCommand - Options (Flags)', () => {
 				json: {type: 'boolean', description: 'Output JSON'},
 				verbose: {type: 'boolean', description: 'Verbose'}
 			},
-			handler: async ({flags}) => flags
+			handler: async (input) => input
 		}
 
 		const result = await runCommand(command, ['--verbose'])
@@ -189,7 +189,7 @@ describe('runCommand - Options (Flags)', () => {
 					description: 'Verbose output'
 				}
 			},
-			handler: async ({flags}) => flags
+			handler: async (input) => input
 		}
 
 		const result = await runCommand(command, ['-v'])
@@ -213,7 +213,7 @@ describe('runCommand - Options (Flags)', () => {
 					}
 				}
 			},
-			handler: async ({flags}) => flags
+			handler: async (input) => input
 		}
 
 		const result = await runCommand(command, ['--limit', '42'])
@@ -285,7 +285,7 @@ describe('runCommand - Options (Flags)', () => {
 					required: true
 				}
 			},
-			handler: async ({flags}) => flags
+			handler: async (input) => input
 		}
 
 		const result = await runCommand(command, ['--email', 'test@example.com'])
@@ -327,7 +327,7 @@ describe('runCommand - Options (Flags)', () => {
 					required: true
 				}
 			},
-			handler: async ({flags}) => flags
+			handler: async (input) => input
 		}
 
 		const result = await runCommand(command, ['--confirm'])
@@ -395,7 +395,7 @@ describe('runCommand - Conflicts', () => {
 				json: {type: 'boolean', description: 'JSON output'},
 				verbose: {type: 'boolean', description: 'Verbose'}
 			},
-			handler: async ({flags}) => flags
+			handler: async (input) => input
 		}
 
 		const result = await runCommand(command, ['--json', '--verbose'])
@@ -412,7 +412,7 @@ describe('runCommand - Validation', () => {
 			validate: z.object({
 				slug: z.string().min(3)
 			}),
-			handler: async ({args}) => args
+			handler: async (input) => input
 		}
 
 		const result = await runCommand(command, ['ko002'])
@@ -447,7 +447,7 @@ describe('runCommand - Context', () => {
 			description: 'Test',
 			args: [],
 			options: {},
-			handler: async ({context}) => context
+			handler: async (input, {context}) => context
 		}
 
 		const context = {auth: {token: 'secret'}, config: {verbose: true}}
@@ -512,11 +512,12 @@ describe('runCommand - Integration', () => {
 				}
 			},
 			validate: z.object({
-				slugs: z.array(z.string().min(1))
+				slugs: z.array(z.string().min(1)),
+				json: z.boolean(),
+				limit: z.number()
 			}),
-			handler: async ({args, flags, context}) => ({
-				args,
-				flags,
+			handler: async (input, {context}) => ({
+				input,
 				context
 			})
 		}
@@ -529,8 +530,7 @@ describe('runCommand - Integration', () => {
 		)
 
 		expect(result).toEqual({
-			args: {slugs: ['ko002', 'oskar']},
-			flags: {json: true, limit: 10},
+			input: {slugs: ['ko002', 'oskar'], json: true, limit: 10},
 			context: {auth: true}
 		})
 	})

@@ -13,7 +13,7 @@ export default {
 		}
 	},
 
-	handler: async ({flags}) => {
+	handler: async (input) => {
 		const rl = createInterface({
 			input: process.stdin,
 			output: process.stdout
@@ -21,7 +21,7 @@ export default {
 
 		try {
 			// Get email (from flag or prompt)
-			let email = flags.email
+			let email = input.email
 			if (!email) {
 				email = await rl.question('Email: ')
 				email = email.trim()
