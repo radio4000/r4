@@ -8,7 +8,7 @@ export default {
 		const session = await loadSession()
 
 		if (!session) {
-			console.error('✗ Not logged in')
+			console.error('Not logged in')
 			return {
 				data: {success: false, message: 'Not logged in'},
 				format: 'json'
@@ -29,9 +29,9 @@ export default {
 		// Clear local session
 		await clearSession()
 
-		console.error('\n✓ Signed out successfully!')
+		console.error('Signed out successfully')
 		console.error(
-			'Session cleared from ~/.config/radio4000/cli/credentials.json\n'
+			'Session cleared from ~/.config/radio4000/cli/credentials.json'
 		)
 
 		return {

@@ -1,6 +1,6 @@
 import {z} from 'zod'
-import {getChannel, listTracks} from '../../lib/data.js'
-import {downloadChannel} from '../../lib/download.js'
+import {getChannel, listTracks} from '../lib/data.js'
+import {downloadChannel} from '../lib/download.js'
 
 export default {
 	description: 'Download all tracks from a channel',
@@ -14,7 +14,7 @@ export default {
 	],
 
 	options: {
-		folder: {
+		output: {
 			type: 'string',
 			description: 'Download folder path (defaults to ./downloads/<slug>)'
 		},
@@ -50,7 +50,7 @@ export default {
 
 	handler: async ({args, flags}) => {
 		const {slug} = args
-		const folderPath = flags.folder || `./downloads/${slug}`
+		const folderPath = flags.output || `./downloads/${slug}`
 
 		// Get channel and tracks
 		const channel = await getChannel(slug)
@@ -58,7 +58,6 @@ export default {
 
 		console.log(`Channel: ${channel.name} (@${channel.slug})`)
 		console.log(`Folder: ${folderPath}`)
-		console.log()
 
 		// Download
 		const result = await downloadChannel(tracks, folderPath, {
@@ -70,18 +69,18 @@ export default {
 
 		console.log()
 		console.log('Summary:')
-		console.log(`- Total: ${result.total}`)
-		console.log(`- Downloaded: ${result.downloaded}`)
-		console.log(`- Already exists: ${result.existing}`)
-		console.log(`- Unavailable: ${result.unavailable}`)
-		console.log(`- Failed: ${result.failed}`)
+		console.log(`  Total: ${result.total}`)
+		console.log(`  Downloaded: ${result.downloaded}`)
+		console.log(`  Already exists: ${result.existing}`)
+		console.log(`  Unavailable: ${result.unavailable}`)
+		console.log(`  Failed: ${result.failed}`)
 
 		if (result.failures.length > 0) {
 			console.log()
 			console.log('Failures:')
 			for (const failure of result.failures) {
-				console.log(`- ${failure.track.title}`)
-				console.log(`  ${failure.error}`)
+				console.log(`  ${failure.track.title}`)
+				console.log(`    ${failure.error}`)
 			}
 		}
 
@@ -92,11 +91,11 @@ export default {
 	},
 
 	examples: [
-		'r4 channel download ko002',
-		'r4 channel download ko002 --limit 10',
-		'r4 channel download ko002 --folder ./my-music',
-		'r4 channel download ko002 --dry-run',
-		'r4 channel download ko002 --force',
-		'r4 channel download ko002 --no-metadata'
+		'r4 download ko002',
+		'r4 download ko002 --limit 10',
+		'r4 download ko002 --output ./my-music',
+		'r4 download ko002 --dry-run',
+		'r4 download ko002 --force',
+		'r4 download ko002 --no-metadata'
 	]
 }

@@ -185,9 +185,40 @@ export async function listTracks(options = {}) {
 
 	try {
 		// Fetch v2 tracks for specified channels
-		const v2Tracks = (await Promise.all(channelSlugs.map(fetchChannelTracks)))
-			.flat()
-			.map(parseTrack('v2'))
+		const rawTracks = (
+			await Promise.all(channelSlugs.map(fetchChannelTracks))
+		).flat()
+		const invalidTracks = []
+
+		const v2Tracks = rawTracks
+			.map((tr) => {
+				try {
+					return parseTrack('v2')(tr)
+				} catch (error) {
+					// Collect invalid tracks for reporting
+					invalidTracks.push({
+						id: tr.id,
+						title: tr.title,
+						url: tr.url,
+						error: error.errors?.[0]?.message || error.message
+					})
+					return null
+				}
+			})
+			.filter(Boolean)
+
+		// Log warning about invalid tracks
+		if (invalidTracks.length > 0) {
+			console.error(
+				`Warning: Skipped ${invalidTracks.length} invalid track(s):`
+			)
+			invalidTracks.forEach((t) => {
+				console.error(`  "${t.title}"`)
+				console.error(`    URL: ${t.url}`)
+				console.error(`    Reason: Invalid URL format`)
+				console.error(`    Fix: r4 track edit ${t.id}`)
+			})
+		}
 
 		// Combine v2 + v1 tracks
 		// Note: v1 tracks from migrated channels have been pre-cleaned, so no deduplication needed

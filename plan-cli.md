@@ -39,16 +39,8 @@ All core features implemented and tested (2025-10-28).
 
 - [ ] Add `--format` flag: json (default), csv, table, tsv (extends --sql)
 
-- [ ] Add `--pretty/--compact` flags for JSON formatting control
-
-- [ ] Consider adding `channels` as alias for `channel list`
-
 ### Download Improvements
 
 - [ ] Add concurrency control (p-limit) for batch downloads
 - [ ] Add retry logic for failed downloads
 - [ ] Add premium/poToken support for YouTube Music
-
-### Future Porcelain Commands
-
-- [ ] `r4 add` - Smart track addition with URL metadata fetching

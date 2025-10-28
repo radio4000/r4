@@ -28,36 +28,37 @@ export default {
 			}
 
 			if (!email || !email.includes('@')) {
-				console.error('✗ Invalid email address')
+				console.error('Invalid email address')
 				return {data: {success: false}, format: 'json'}
 			}
 
 			// Step 1: Send OTP
-			console.error(`\nSending verification code to: ${email}`)
+			console.error(`Sending verification code to ${email}`)
 			const {error: otpError} = await sdk.auth.signInWithOtp({
 				email,
 				options: {shouldCreateUser: false}
 			})
 
 			if (otpError) {
-				console.error(`✗ Error: ${otpError.message}`)
+				console.error(`Error: ${otpError.message}`)
 				return {data: {success: false, error: otpError.message}, format: 'json'}
 			}
 
-			console.error('✓ Verification code sent!')
-			console.error('Check your email for a 6-digit code.\n')
+			console.error(
+				'Verification code sent. Check your email for a 6-digit code.'
+			)
 
 			// Step 2: Prompt for code
 			const code = await rl.question('Enter the 6-digit code: ')
 			const trimmedCode = code.trim()
 
 			if (!trimmedCode) {
-				console.error('✗ No code entered')
+				console.error('No code entered')
 				return {data: {success: false}, format: 'json'}
 			}
 
 			// Step 3: Verify OTP
-			console.error('\nVerifying code...')
+			console.error('Verifying code...')
 			const {data: verifyData, error: verifyError} = await sdk.auth.verifyOtp({
 				email,
 				token: trimmedCode,
@@ -66,7 +67,7 @@ export default {
 
 			if (verifyError || !verifyData.session) {
 				console.error(
-					`✗ Verification failed: ${verifyError?.message || 'Invalid or expired code'}`
+					`Verification failed: ${verifyError?.message || 'Invalid or expired code'}`
 				)
 				return {
 					data: {success: false, error: verifyError?.message},
@@ -77,11 +78,8 @@ export default {
 			// Step 4: Save session
 			await saveSession(verifyData.session)
 
-			console.error('✓ Successfully authenticated!')
-			console.error(`\nLogged in as: ${verifyData.session.user.email}`)
-			console.error(
-				'Session saved to ~/.config/radio4000/cli/credentials.json\n'
-			)
+			console.error(`Authenticated as ${verifyData.session.user.email}`)
+			console.error('Session saved to ~/.config/radio4000/cli/credentials.json')
 
 			return {
 				data: {

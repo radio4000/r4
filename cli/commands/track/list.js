@@ -1,5 +1,38 @@
 import {listTracks} from '../../lib/data.js'
 
+function formatTrackSummary(tracks, limit) {
+	const totalCount = tracks.length
+	const displayLimit = limit || 10
+	const displayTracks = tracks.slice(0, displayLimit)
+
+	const lines = []
+	lines.push(`Found ${totalCount} track${totalCount !== 1 ? 's' : ''}`)
+	lines.push('')
+
+	if (totalCount > 0) {
+		const showing = Math.min(displayLimit, totalCount)
+		lines.push(`Showing ${showing} track${showing !== 1 ? 's' : ''}:`)
+
+		displayTracks.forEach((track) => {
+			lines.push(`  ${track.title}`)
+			lines.push(`    ${track.url}`)
+		})
+
+		if (totalCount > displayLimit) {
+			lines.push('')
+			lines.push(`... and ${totalCount - displayLimit} more`)
+		}
+
+		lines.push('')
+		lines.push('Use --format json or --format sql for full data export')
+		if (!limit) {
+			lines.push('Use --limit N to show more tracks in summary')
+		}
+	}
+
+	return lines.join('\n')
+}
+
 export default {
 	description: 'List tracks for specified channel(s)',
 
@@ -14,32 +47,43 @@ export default {
 			type: 'number',
 			description: 'Limit number of results'
 		},
-		sql: {
-			type: 'boolean',
-			description: 'Output as SQL statements',
-			default: false
+		format: {
+			type: 'string',
+			description: 'Output format: text, json, or sql',
+			default: 'text'
 		}
 	},
 
 	handler: async ({flags}) => {
 		const channelSlugs = flags.channel && [flags.channel].flat()
+		const format = flags.format || 'text'
 
 		const tracks = await listTracks({
 			channelSlugs,
 			limit: flags.limit
 		})
 
+		// For text format, return formatted summary
+		if (format === 'text') {
+			return {
+				data: formatTrackSummary(tracks, flags.limit),
+				format: 'text'
+			}
+		}
+
+		// For json/sql, return raw data
 		return {
 			data: tracks,
-			format: flags.sql ? 'sql' : 'json',
-			formatOptions: flags.sql ? {table: 'tracks'} : undefined
+			format: format,
+			formatOptions: format === 'sql' ? {table: 'tracks'} : undefined
 		}
 	},
 
 	examples: [
 		'r4 track list --channel ko002',
-		'r4 track list --channel ko002 --limit 5',
-		'r4 track list --channel ko002 --channel oskar',
-		'r4 track list --channel ko002 --sql'
+		'r4 track list --channel ko002 --limit 20',
+		'r4 track list --channel ko002 --format json',
+		'r4 track list --channel ko002 --format sql',
+		'r4 track list --channel ko002 --channel oskar'
 	]
 }

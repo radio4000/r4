@@ -110,7 +110,7 @@ EXAMPLES
        r4 track list --channel foo | jq '.[] | .title'
 
        # Download
-       r4 channel download acapulco --output ~/Music
+       r4 download acapulco --folder ~/Music
 
 SEE ALSO
        https://radio4000.com

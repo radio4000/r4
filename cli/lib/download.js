@@ -99,9 +99,9 @@ export async function downloadChannel(tracks, folderPath, options = {}) {
 
 	// Report what we found
 	console.log('Total tracks:', tracks.length)
-	console.log('- Unavailable:', unavailable.length)
-	console.log('- Already exists:', existing.length)
-	console.log('- To download:', toDownload.length)
+	console.log('  Unavailable:', unavailable.length)
+	console.log('  Already exists:', existing.length)
+	console.log('  To download:', toDownload.length)
 	console.log()
 
 	// Pipeline: Download

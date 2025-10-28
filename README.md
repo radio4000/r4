@@ -24,7 +24,6 @@ r4 is a command-line interface for interacting with Radio4000 channels and track
 ## Channel Operations
 - `r4 channel create` - Create a new channel
 - `r4 channel delete` - Delete one or more channels
-- `r4 channel download` - Download all tracks from a channel
 - `r4 channel list` - List all channels (from v2 API or bundled v1 data)
 - `r4 channel update` - Update one or more channels
 - `r4 channel view` - View detailed information about one or more channels
@@ -37,6 +36,7 @@ r4 is a command-line interface for interacting with Radio4000 channels and track
 - `r4 track view` - View detailed information about one or more tracks
 
 ## General
+- `r4 download` - Download all tracks from a channel
 - `r4 help` - Show help information
 - `r4 search` - Search channels and tracks
 - `r4 version` - Show version information
@@ -80,7 +80,7 @@ r4 track list --channel foo | jq '.[] | .title'
 r4 channel list --limit 10 | jq '.[].slug'
 
 # Download
-r4 channel download acapulco --output ~/Music
+r4 download acapulco --folder ~/Music
 ```
 
 # INSTALLATION
