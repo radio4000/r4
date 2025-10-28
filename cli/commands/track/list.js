@@ -1,13 +1,14 @@
 import {listTracks} from '../../lib/data.js'
 
 export default {
-	description: 'List all tracks, optionally filtered by channel(s)',
+	description: 'List tracks for specified channel(s)',
 
 	options: {
 		channel: {
 			type: 'string',
 			description: 'Channel slug to filter by (can be used multiple times)',
-			multiple: true
+			multiple: true,
+			required: true
 		},
 		limit: {
 			type: 'number',
@@ -21,11 +22,7 @@ export default {
 	},
 
 	handler: async ({flags}) => {
-		const channelSlugs = flags.channel
-			? Array.isArray(flags.channel)
-				? flags.channel
-				: [flags.channel]
-			: undefined
+		const channelSlugs = flags.channel && [flags.channel].flat()
 
 		const tracks = await listTracks({
 			channelSlugs,
@@ -40,10 +37,9 @@ export default {
 	},
 
 	examples: [
-		'r4 track list',
 		'r4 track list --channel ko002',
 		'r4 track list --channel ko002 --limit 5',
 		'r4 track list --channel ko002 --channel oskar',
-		'r4 track list --sql'
+		'r4 track list --channel ko002 --sql'
 	]
 }

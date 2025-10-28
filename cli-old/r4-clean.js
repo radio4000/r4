@@ -2,7 +2,7 @@
 
 const args = require('args')
 const fs = require('fs-extra')
-const path = require('path')
+const path = require('node:path')
 
 args
 	.option('debug', 'More outputs to the console')
@@ -61,7 +61,7 @@ const main = async () => {
 
 	try {
 		await cleanPath(pathToClean)
-	} catch (error) {
+	} catch (_error) {
 		console.error('Error cleaning folder path', pathToClean)
 	}
 }

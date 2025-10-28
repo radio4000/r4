@@ -2,6 +2,7 @@ import {readFile} from 'node:fs/promises'
 import {dirname, resolve} from 'node:path'
 import {fileURLToPath} from 'node:url'
 import {sdk} from '@radio4000/sdk'
+import fuzzysort from 'fuzzysort'
 import {channelSchema, trackSchema} from './schema.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -65,15 +66,28 @@ export function requireAuth() {
 
 export async function listChannels(options = {}) {
 	const {limit} = options
+
+	// Always load v1 channels
+	const v1Channels = await loadV1Channels()
+
 	try {
-		const {data: channels, error} = await sdk.channels.readChannels(limit)
+		// Try to get v2 channels
+		const {data: v2Data, error} = await sdk.channels.readChannels()
 		if (error) throw new Error(error)
-		return channels.map((ch) => channelSchema.parse({...ch, source: 'v2'}))
-	} catch (error) {
-		console.warn('API unavailable, using bundled v1 data')
-		let result = await loadV1Channels()
-		if (limit) result = result.slice(0, limit)
-		return result
+
+		const v2Channels = v2Data.map((ch) =>
+			channelSchema.parse({...ch, source: 'v2'})
+		)
+
+		// Combine: v2 takes priority over v1 for duplicate slugs
+		const v2Slugs = new Set(v2Channels.map((ch) => ch.slug))
+		const v1Only = v1Channels.filter((ch) => !v2Slugs.has(ch.slug))
+		const combined = [...v2Channels, ...v1Only]
+
+		return limit ? combined.slice(0, limit) : combined
+	} catch (_error) {
+		console.warn('API unavailable, using bundled v1 data only')
+		return limit ? v1Channels.slice(0, limit) : v1Channels
 	}
 }
 
@@ -82,7 +96,7 @@ export async function getChannel(slug) {
 		const {data: channel, error} = await sdk.channels.readChannel(slug)
 		if (error) throw new Error(error)
 		return channelSchema.parse({...channel, source: 'v2'})
-	} catch (error) {
+	} catch (_error) {
 		// Fall back to v1
 		const v1Channels = await loadV1Channels()
 		const channel = v1Channels.find((ch) => ch.slug === slug)
@@ -137,42 +151,49 @@ export async function deleteChannel(slug) {
 
 // ===== TRACK OPERATIONS =====
 
+const applyLimit = (limit) => (items) => (limit ? items.slice(0, limit) : items)
+
+const parseTrack = (source) => (tr) => trackSchema.parse({...tr, source})
+
+const fetchChannelTracks = async (slug) => {
+	const {data: tracks, error} = await sdk.channels.readChannelTracks(slug)
+	if (error) throw new Error(error)
+	return tracks
+}
+
 export async function listTracks(options = {}) {
 	const {channelSlugs, limit} = options
+	const limitTo = applyLimit(limit)
+
+	// Require channelSlugs
+	if (!channelSlugs || channelSlugs.length === 0) {
+		throw new Error(
+			'channelSlugs required. Specify at least one channel to list tracks from.'
+		)
+	}
+
+	// Always load v1 tracks
+	const v1Tracks = await loadV1Tracks()
 
 	try {
-		// If filtering by channels, we need to get each channel's tracks
-		if (channelSlugs && channelSlugs.length > 0) {
-			const allTracks = []
-			for (const slug of channelSlugs) {
-				const {data: tracks, error} = await sdk.channels.readChannelTracks(slug)
-				if (error) throw new Error(error)
-				allTracks.push(...tracks)
-			}
-			let result = allTracks.map((tr) =>
-				trackSchema.parse({...tr, source: 'v2'})
-			)
-			if (limit) result = result.slice(0, limit)
-			return result
-		}
+		// Fetch v2 tracks for specified channels
+		const v2Tracks = (await Promise.all(channelSlugs.map(fetchChannelTracks)))
+			.flat()
+			.map(parseTrack('v2'))
 
-		// Otherwise, we'd need a "read all tracks" endpoint
-		// For now, fall back to v1 or return empty
-		console.warn('Listing all tracks requires channel filter or v1 fallback')
-		let result = await loadV1Tracks()
-		if (limit) result = result.slice(0, limit)
-		return result
-	} catch (error) {
-		console.warn('API unavailable, using bundled v1 data')
-		let tracks = await loadV1Tracks()
+		// Combine v2 + v1 tracks
+		// Note: v1 tracks from migrated channels have been pre-cleaned, so no deduplication needed
+		const combined = [...v2Tracks, ...v1Tracks]
 
-		// Filter by channel slugs if requested
-		if (channelSlugs && channelSlugs.length > 0) {
-			tracks = tracks.filter((tr) => channelSlugs.includes(tr.slug))
-		}
+		// Filter by channel slugs
+		const filtered = combined.filter((tr) => channelSlugs.includes(tr.slug))
 
-		if (limit) tracks = tracks.slice(0, limit)
-		return tracks
+		return limitTo(filtered)
+	} catch (_error) {
+		console.warn('API unavailable, using bundled v1 data only')
+		const filtered = v1Tracks.filter((tr) => channelSlugs.includes(tr.slug))
+
+		return limitTo(filtered)
 	}
 }
 
@@ -181,7 +202,7 @@ export async function getTrack(id) {
 		const {data: track, error} = await sdk.tracks.readTrack(id)
 		if (error) throw new Error(error)
 		return trackSchema.parse({...track, source: 'v2'})
-	} catch (error) {
+	} catch (_error) {
 		// Fall back to v1
 		const v1Tracks = await loadV1Tracks()
 		const track = v1Tracks.find((tr) => tr.id === id)
@@ -265,4 +286,115 @@ export async function readUser() {
 	const {data, error} = await sdk.users.readUser(token)
 	if (error) throw new Error(error)
 	return data
+}
+
+// ===== SEARCH OPERATIONS =====
+
+export async function searchChannels(query, options = {}) {
+	const {limit, threshold = -10000} = options
+
+	// Always load v1 for fallback/supplement
+	const v1Channels = await loadV1Channels()
+
+	try {
+		// Use SDK full-text search on API
+		const {data, error} = await sdk.supabase
+			.from('channels')
+			.select()
+			.textSearch('fts', `'${query}':*`)
+
+		if (error) throw new Error(error.message)
+
+		// Parse API results
+		const apiResults = data.map((ch) =>
+			channelSchema.parse({...ch, source: 'v2'})
+		)
+
+		// Also do fuzzy search on v1 data
+		const v1Results = fuzzysort
+			.go(query, v1Channels, {
+				keys: ['slug', 'name', 'description'],
+				threshold,
+				all: false
+			})
+			.map((r) => r.obj)
+
+		// Combine: API first, then v1 results not already in API
+		const apiSlugs = new Set(apiResults.map((ch) => ch.slug))
+		const v1Only = v1Results.filter((ch) => !apiSlugs.has(ch.slug))
+		const combined = [...apiResults, ...v1Only]
+
+		return limit ? combined.slice(0, limit) : combined
+	} catch (_error) {
+		console.warn('API unavailable, using v1 fuzzy search only')
+		// Fallback to v1 fuzzy search
+		const results = fuzzysort.go(query, v1Channels, {
+			keys: ['slug', 'name', 'description'],
+			limit,
+			threshold,
+			all: false
+		})
+		return results.map((r) => r.obj)
+	}
+}
+
+export async function searchTracks(query, options = {}) {
+	const {limit, threshold = -10000} = options
+
+	// Always load v1 for fallback/supplement
+	const v1Tracks = await loadV1Tracks()
+
+	try {
+		// Use SDK full-text search on API (channel_tracks table)
+		const {data, error} = await sdk.supabase
+			.from('channel_tracks')
+			.select()
+			.textSearch('fts', `'${query}':*`)
+
+		if (error) throw new Error(error.message)
+
+		// Parse API results
+		const apiResults = data.map((tr) =>
+			trackSchema.parse({...tr, source: 'v2'})
+		)
+
+		// Also do fuzzy search on v1 data
+		const v1Results = fuzzysort
+			.go(query, v1Tracks, {
+				keys: ['title', 'description'],
+				threshold,
+				all: false
+			})
+			.map((r) => r.obj)
+
+		// Combine: API first, then v1 results
+		// Note: v1 tracks from migrated channels are already cleaned, minimal overlap expected
+		const combined = [...apiResults, ...v1Results]
+
+		return limit ? combined.slice(0, limit) : combined
+	} catch (_error) {
+		console.warn('API unavailable, using v1 fuzzy search only')
+		// Fallback to v1 fuzzy search
+		const results = fuzzysort.go(query, v1Tracks, {
+			keys: ['title', 'description'],
+			limit,
+			threshold,
+			all: false
+		})
+		return results.map((r) => r.obj)
+	}
+}
+
+export async function searchAll(query, options = {}) {
+	const {limit} = options
+
+	const [channels, tracks] = await Promise.all([
+		searchChannels(query, options),
+		searchTracks(query, options)
+	])
+
+	return {
+		channels: limit ? channels.slice(0, limit) : channels,
+		tracks: limit ? tracks.slice(0, limit) : tracks
+	}
 }

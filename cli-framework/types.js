@@ -61,7 +61,73 @@ export const ErrorTypes = {
 	INVALID_ARGUMENT: 'invalid_argument',
 	CONFLICTING_OPTIONS: 'conflicting_options',
 	HANDLER_ERROR: 'handler_error',
-	INVALID_COMMAND_DEFINITION: 'invalid_command_definition'
+	INVALID_COMMAND_DEFINITION: 'invalid_command_definition',
+	HELP_REQUESTED: 'help_requested'
+}
+
+/**
+ * Format command help text
+ * @param {Object} command - The command definition
+ * @param {string} commandName - The command name/path (e.g., 'channel view')
+ * @returns {string} Formatted help text
+ */
+export function formatCommandHelp(command, commandName = '') {
+	let output = ''
+
+	// Description
+	if (command.description) {
+		output += `${command.description}\n\n`
+	}
+
+	// Usage
+	output += 'USAGE\n'
+	let usage = `  r4 ${commandName}`
+
+	if (command.args && command.args.length > 0) {
+		for (const arg of command.args) {
+			const argName = arg.multiple ? `<${arg.name}>...` : `<${arg.name}>`
+			usage += ` ${arg.required ? argName : `[${argName}]`}`
+		}
+	}
+
+	if (command.options && Object.keys(command.options).length > 0) {
+		usage += ' [options]'
+	}
+
+	output += `${usage}\n\n`
+
+	// Arguments
+	if (command.args && command.args.length > 0) {
+		output += 'ARGUMENTS\n'
+		for (const arg of command.args) {
+			const required = arg.required ? '(required)' : '(optional)'
+			const multiple = arg.multiple ? ' - accepts multiple values' : ''
+			output += `  ${arg.name}  ${arg.description} ${required}${multiple}\n`
+		}
+		output += '\n'
+	}
+
+	// Options
+	if (command.options && Object.keys(command.options).length > 0) {
+		output += 'OPTIONS\n'
+		for (const [name, opt] of Object.entries(command.options)) {
+			const shortFlag = opt.short ? `-${opt.short}, ` : '    '
+			const defaultVal =
+				opt.default !== undefined ? ` (default: ${opt.default})` : ''
+			output += `  ${shortFlag}--${name}  ${opt.description}${defaultVal}\n`
+		}
+		output += '\n'
+	}
+
+	// Examples
+	if (command.examples && command.examples.length > 0) {
+		output += 'EXAMPLES\n'
+		for (const example of command.examples) {
+			output += `  ${example}\n`
+		}
+	}
+
+	return output.trim()
 }
 
 /**
@@ -70,6 +136,13 @@ export const ErrorTypes = {
  * @returns {string} Formatted error message
  */
 export function formatCLIError(error) {
+	if (error.type === ErrorTypes.HELP_REQUESTED && error.context?.command) {
+		return formatCommandHelp(
+			error.context.command,
+			error.context.commandName || ''
+		)
+	}
+
 	if (error.type === ErrorTypes.UNKNOWN_COMMAND && error.context?.available) {
 		let output = ''
 

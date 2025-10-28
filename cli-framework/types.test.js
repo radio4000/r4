@@ -118,7 +118,7 @@ describe('CommandSchema', () => {
 					conflicts: ['json']
 				}
 			},
-			handler: async ({args, flags, context}) => {
+			handler: async ({args}) => {
 				return args
 			},
 			examples: ['r4 channel view ko002', 'r4 channel view ko002 --sql']

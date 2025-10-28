@@ -6,7 +6,8 @@ export default {
 	options: {
 		limit: {
 			type: 'number',
-			description: 'Limit number of results'
+			description: 'Limit number of results (default: 100)',
+			default: 100
 		},
 		sql: {
 			type: 'boolean',
@@ -16,19 +17,19 @@ export default {
 	},
 
 	handler: async ({flags}) => {
-		// Require --limit to prevent accidentally fetching all channels
-		if (!flags.limit) {
-			throw new Error(
-				'--limit is required (0-4000)\nExample: r4 channel list --limit 10'
-			)
-		}
+		// Use default limit of 100 if not specified
+		const limit = flags.limit ?? 100
 
 		return {
-			data: await listChannels({limit: flags.limit}),
+			data: await listChannels({limit}),
 			format: flags.sql ? 'sql' : 'json',
 			formatOptions: flags.sql ? {table: 'channels'} : undefined
 		}
 	},
 
-	examples: ['r4 channel list --limit 10', 'r4 channel list --limit 100 --sql']
+	examples: [
+		'r4 channel list',
+		'r4 channel list --limit 10',
+		'r4 channel list --limit 100 --sql'
+	]
 }

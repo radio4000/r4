@@ -159,8 +159,12 @@ export async function executeCommand({commandsDir, argv, context = {}}) {
 	// Load and validate command
 	const command = await loadCommand(commandFile)
 
+	// Add command name to context for help display
+	const commandName = commandPath.join(' ')
+	const extendedContext = {...context, commandName}
+
 	// Execute command
-	return await runCommand(command, commandArgv, context)
+	return await runCommand(command, commandArgv, extendedContext)
 }
 
 /**
@@ -187,13 +191,47 @@ export async function listCommands(commandsDir) {
 					description: command.description,
 					isDirectory: false
 				})
-			} catch (error) {
+			} catch (_error) {
 				// Skip commands that fail to load
 				result.push({
 					name: cmd.name,
 					description: 'Error loading command',
 					isDirectory: false
 				})
+			}
+		}
+	}
+
+	return result
+}
+
+/**
+ * Recursively list all commands in a directory tree
+ * @param {string} commandsDir - Root directory containing commands
+ * @param {string} prefix - Path prefix for nested commands
+ * @returns {Promise<Array<{name: string, description: string, hidden: boolean}>>}
+ */
+export async function listAllCommands(commandsDir, prefix = '') {
+	const commands = await discoverCommands(commandsDir)
+	const result = []
+
+	for (const cmd of commands) {
+		const fullName = prefix ? `${prefix}/${cmd.name}` : cmd.name
+
+		if (cmd.isDirectory) {
+			// Recurse into subdirectories
+			const subCommands = await listAllCommands(cmd.path, fullName)
+			result.push(...subCommands)
+		} else {
+			try {
+				const command = await loadCommand(cmd.path)
+				result.push({
+					name: fullName,
+					description: command.description,
+					hidden: command.hidden || false
+				})
+			} catch (_error) {
+				// Skip commands that fail to load
 			}
 		}
 	}

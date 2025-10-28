@@ -9,12 +9,8 @@
 import {dirname, resolve} from 'node:path'
 import {fileURLToPath} from 'node:url'
 import {executeCommand, listCommands} from './index.js'
-import {CLIError, ErrorTypes, validateCommandDefinition} from './types.js'
-import {
-	generateCommandHelp,
-	generateGroupHelp,
-	generateMainHelp
-} from './utils/help.js'
+import {CLIError, ErrorTypes} from './types.js'
+import {generateMainHelp} from './utils/help.js'
 import {formatOutput} from './utils/output.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))

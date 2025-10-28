@@ -103,7 +103,7 @@ export class DataSource {
 			// Try v2 API first
 			const channels = await this.apiRequest('/channels')
 			return channels.map((ch) => channelSchema.parse({...ch, source: 'v2'}))
-		} catch (error) {
+		} catch (_error) {
 			// Fall back to v1 bundled data
 			console.warn('API unavailable, using bundled v1 data')
 			return await loadV1Channels()
@@ -118,7 +118,7 @@ export class DataSource {
 			// Try v2 API first
 			const channel = await this.apiRequest(`/channels/${slug}`)
 			return channelSchema.parse({...channel, source: 'v2'})
-		} catch (error) {
+		} catch (_error) {
 			// Fall back to v1 bundled data
 			const v1Channels = await loadV1Channels()
 			const channel = v1Channels.find((ch) => ch.slug === slug)
@@ -194,12 +194,14 @@ export class DataSource {
 			let endpoint = '/tracks'
 			if (filters.channelSlugs && filters.channelSlugs.length > 0) {
 				const params = new URLSearchParams()
-				filters.channelSlugs.forEach((slug) => params.append('channel', slug))
+				for (const slug of filters.channelSlugs) {
+					params.append('channel', slug)
+				}
 				endpoint += `?${params.toString()}`
 			}
 			const tracks = await this.apiRequest(endpoint)
 			return tracks.map((tr) => trackSchema.parse({...tr, source: 'v2'}))
-		} catch (error) {
+		} catch (_error) {
 			// Fall back to v1 bundled data
 			console.warn('API unavailable, using bundled v1 data')
 			let tracks = await loadV1Tracks()
@@ -221,7 +223,7 @@ export class DataSource {
 			// Try v2 API first
 			const track = await this.apiRequest(`/tracks/${id}`)
 			return trackSchema.parse({...track, source: 'v2'})
-		} catch (error) {
+		} catch (_error) {
 			// Fall back to v1 bundled data
 			const v1Tracks = await loadV1Tracks()
 			const track = v1Tracks.find((tr) => tr.id === id)

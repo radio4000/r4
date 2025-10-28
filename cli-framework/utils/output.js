@@ -61,7 +61,9 @@ export function formatSQL(data, {table = 'data'} = {}) {
 	const columns = new Set()
 	for (const row of data) {
 		if (typeof row === 'object' && row !== null) {
-			Object.keys(row).forEach((key) => columns.add(key))
+			for (const key of Object.keys(row)) {
+				columns.add(key)
+			}
 		}
 	}
 

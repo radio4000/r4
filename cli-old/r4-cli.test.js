@@ -1,6 +1,5 @@
 #!/usr/bin/env bun
 import {describe, expect, test} from 'bun:test'
-import {$} from 'bun'
 
 // Mock CLI for testing the interface design
 // This simulates what the real r4 CLI would do
@@ -23,7 +22,7 @@ const r4 = {
 			return opts.sql ? mockSQL('channels', channels) : channels
 		},
 		create: async (slug, opts = {}) => {
-			return {slug, ...opts, id: 'ch_' + Math.random()}
+			return {slug, ...opts, id: `ch_${Math.random()}`}
 		},
 		update: async (slugs, opts = {}) => {
 			return slugs.map((slug) => ({slug, ...opts}))
@@ -54,7 +53,7 @@ const r4 = {
 		},
 		create: async (data, opts = {}) => {
 			// Accept JSON from stdin or options
-			const track = {id: 't_' + Math.random(), ...data, ...opts}
+			const track = {id: `t_${Math.random()}`, ...data, ...opts}
 			return track
 		},
 		update: async (ids, opts = {}) => {

@@ -1,7 +1,60 @@
+import {dirname} from 'node:path'
+import {fileURLToPath} from 'node:url'
+import {listAllCommands} from '../../cli-framework/index.js'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
+
 export default {
 	description: 'Show help information',
 
 	handler: async () => {
+		// Auto-discover all commands recursively from filesystem
+		const allCommands = await listAllCommands(__dirname)
+
+		// Group commands by category (directory structure)
+		const groups = {}
+		for (const cmd of allCommands) {
+			// Skip hidden commands
+			if (cmd.hidden) continue
+
+			// Determine group from path (e.g., "channel/list" → "channel")
+			const parts = cmd.name.split('/')
+			if (parts.length > 1) {
+				const group = parts[0]
+				const subcommand = parts.slice(1).join(' ')
+				if (!groups[group]) groups[group] = []
+				groups[group].push({
+					name: `${group} ${subcommand}`,
+					description: cmd.description
+				})
+			} else {
+				// Top-level commands go into "General"
+				if (!groups.General) groups.General = []
+				groups.General.push({name: cmd.name, description: cmd.description})
+			}
+		}
+
+		// Generate COMMANDS section dynamically
+		let commandsSection = ''
+		const groupTitles = {
+			channel: 'Channel Operations',
+			track: 'Track Operations',
+			auth: 'Authentication',
+			General: 'General'
+		}
+
+		for (const [group, commands] of Object.entries(groups)) {
+			const title =
+				groupTitles[group] ||
+				`${group.charAt(0).toUpperCase() + group.slice(1)} Operations`
+			commandsSection += `   ${title}\n`
+			for (const cmd of commands) {
+				const padding = ' '.repeat(Math.max(1, 20 - cmd.name.length))
+				commandsSection += `       ${cmd.name}${padding}${cmd.description}\n`
+			}
+			commandsSection += '\n'
+		}
+
 		const help = `
 R4(1)                     User Commands                    R4(1)
 
@@ -21,30 +74,7 @@ TLDR
        r4 version                      # Show version
 
 COMMANDS
-   Channel Operations
-       list            List all channels (requires --limit)
-       view <slug>     View channel details
-       create          Create new channel (requires auth)
-       update <slug>   Update channel (requires auth)
-       delete <slug>   Delete channel (requires auth)
-       download <slug> Download channel tracks with yt-dlp
-
-   Track Operations
-       list [--channel <slug>]
-                       List all tracks, optionally filter by channel
-       view <id>       View track details
-       create          Create new track (requires auth)
-       update <id>     Update track (requires auth)
-       delete <id>     Delete track (requires auth)
-
-   Authentication
-       login           Authenticate with Radio4000
-       logout          Clear authentication
-       whoami          Show current user
-
-   General
-       help            Show this help
-       version         Show version information
+${commandsSection.trimEnd()}
 
 FLAGS
        --limit <n>     Limit number of results

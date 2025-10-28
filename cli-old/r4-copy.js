@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 const args = require('args')
-const path = require('path')
-const spawn = require('child_process').spawn
+const path = require('node:path')
+const spawn = require('node:child_process').spawn
 const commandExists = require('command-exists')
 
 args

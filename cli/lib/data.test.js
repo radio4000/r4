@@ -13,9 +13,11 @@ const originalEnv = process.env.R4_AUTH_TOKEN
 
 beforeEach(() => delete process.env.R4_AUTH_TOKEN)
 afterEach(() => {
-	originalEnv
-		? (process.env.R4_AUTH_TOKEN = originalEnv)
-		: delete process.env.R4_AUTH_TOKEN
+	if (originalEnv) {
+		process.env.R4_AUTH_TOKEN = originalEnv
+	} else {
+		delete process.env.R4_AUTH_TOKEN
+	}
 })
 
 describe('loadV1Channels', () => {

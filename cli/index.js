@@ -29,14 +29,17 @@ async function main() {
 		// Handle errors - use framework's error formatter
 		const output = formatCLIError(error)
 
-		// Print to stdout for menu-like messages, stderr for actual errors
-		if (error.type === 'unknown_command' && error.context?.available) {
+		// Print to stdout for help and menu-like messages, stderr for actual errors
+		if (
+			error.type === 'help_requested' ||
+			(error.type === 'unknown_command' && error.context?.available)
+		) {
 			console.log(output)
+			process.exit(0) // Help is not an error
 		} else {
 			console.error(output)
+			process.exit(1)
 		}
-
-		process.exit(1)
 	}
 }
 

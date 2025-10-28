@@ -216,28 +216,54 @@ Error types:
 
 ## Help Generation
 
-Help text is auto-generated from command definitions:
+Help text is auto-generated from command definitions in MANpage style:
 
 ```bash
 $ cli channel view --help
 
-USAGE
+NAME
+  cli-channel-view - View channel details
+
+SYNOPSIS
   cli channel view <slug> [options]
 
 DESCRIPTION
   View channel details
 
 ARGUMENTS
-  <slug>      Channel slug to view (required)
+  <slug>
+      Channel slug to view (required)
 
 OPTIONS
-  --json      Output as JSON (default: true)
-  --sql       Output as SQL statements
+  --json
+      Output as JSON (default: true)
+
+  --sql
+      Output as SQL statements
+      Conflicts with: --json
 
 EXAMPLES
   cli channel view ko002
+      View a single channel as JSON
+
   cli channel view ko002 --sql
+      View a channel with SQL output format
+
+SEE ALSO
+  cli-channel-list(1), cli-channel-create(1)
 ```
+
+### Help Format Specification
+
+The framework generates help in traditional Unix MANpage format:
+
+**NAME** - Command name and brief description
+**SYNOPSIS** - Usage syntax with placeholders
+**DESCRIPTION** - Detailed explanation of what the command does
+**ARGUMENTS** - Positional arguments with descriptions
+**OPTIONS** - Flags and their behavior, including defaults and conflicts
+**EXAMPLES** - Real-world usage examples with explanations
+**SEE ALSO** - Related commands (when available)
 
 ## Testing
 
@@ -370,16 +396,64 @@ const result = await executeCommand({
 });
 ```
 
+## Command Discovery
+
+The framework provides two functions for discovering commands:
+
+### `listCommands(commandsDir)`
+
+Lists immediate commands in a directory (non-recursive):
+
+```javascript
+import { listCommands } from './cli-framework/index.js'
+
+const commands = await listCommands('./cli/commands')
+// Returns: [{ name: 'channel', description: 'Command group', isDirectory: true }, ...]
+```
+
+### `listAllCommands(commandsDir)`
+
+Recursively discovers all commands in a directory tree:
+
+```javascript
+import { listAllCommands } from './cli-framework/index.js'
+
+const commands = await listAllCommands('./cli/commands')
+// Returns: [
+//   { name: 'channel/list', description: '...', hidden: false },
+//   { name: 'channel/view', description: '...', hidden: false },
+//   { name: 'track/list', description: '...', hidden: false },
+//   ...
+// ]
+```
+
+Use this in help commands to auto-generate command lists:
+
+```javascript
+// cli/commands/help.js
+export default {
+  description: 'Show help',
+  handler: async () => {
+    const commands = await listAllCommands(__dirname)
+    // Group and format commands...
+  }
+}
+```
+
+**Benefits**: Single source of truth - new commands automatically appear in help.
+
 ## Future Enhancements
 
 Potential additions (not implemented yet):
 
-- [ ] Config file support (`.clirc`)
-- [ ] Global flags (`--verbose` everywhere)
+- [ ] Shell completion (bash/zsh/fish)
+- [ ] Config file support using [sindresorhus/conf](https://github.com/sindresorhus/conf)
 - [ ] Argument groups (mutually exclusive args)
 - [ ] Interactive prompts
-- [ ] Shell completion
-- [ ] Color/styling support
+
+## Cleanup Tasks
+
+- [ ] Review `cli-old/` directory - keep what's needed, delete the rest
 
 ## License
 

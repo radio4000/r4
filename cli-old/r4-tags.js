@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
-const os = require('os')
+const _os = require('node:os')
 const args = require('args')
 const fs = require('fs-extra')
-const path = require('path')
+const _path = require('node:path')
 const {tagsFromString, uniqueTagsFromList} = require('radio4000-sdk')
 
 args
@@ -42,7 +42,7 @@ async function readChannelData(channelSlug) {
 	let channelData
 	try {
 		channelData = await fs.readJson(`./${channelSlug}/${channelSlug}.json`)
-	} catch (error) {
+	} catch (_error) {
 		console.log(
 			`Missing file at ./${channelSlug}/${channelSlug}.json; See command: r4 init --help`
 		)
@@ -102,7 +102,7 @@ const generateFolderStructure = async ({tracks, slug: channelSlug}) => {
 			await Promise.all(writeTracksAtTagPromises)
 		} catch (error) {
 			// if file already exists
-			if (error.errno != -17) {
+			if (error.errno !== -17) {
 				console.error('Error writing track hard link at tag', error)
 				return
 			}
