@@ -1,45 +1,103 @@
-import {signIn} from '../../lib/data.js'
+import {createInterface} from 'node:readline/promises'
+import {sdk} from '@radio4000/sdk'
+import {saveSession} from '../../lib/auth.js'
 
 export default {
-	description: 'Authenticate with Radio4000',
+	description: 'Authenticate with Radio4000 using email OTP',
 
 	options: {
 		email: {
 			type: 'string',
 			description: 'Email address',
-			required: true
-		},
-		password: {
-			type: 'string',
-			description: 'Password',
-			required: true
+			required: false
 		}
 	},
 
 	handler: async ({flags}) => {
-		const authData = await signIn(flags.email, flags.password)
+		const rl = createInterface({
+			input: process.stdin,
+			output: process.stdout
+		})
 
-		// Output instructions for setting token
-		const token = authData.session?.access_token
-		if (token) {
-			console.error('\n✓ Authentication successful!\n')
-			console.error('To use this session, set the environment variable:')
-			console.error(`  export R4_AUTH_TOKEN="${token}"\n`)
+		try {
+			// Get email (from flag or prompt)
+			let email = flags.email
+			if (!email) {
+				email = await rl.question('Email: ')
+				email = email.trim()
+			}
+
+			if (!email || !email.includes('@')) {
+				console.error('✗ Invalid email address')
+				return {data: {success: false}, format: 'json'}
+			}
+
+			// Step 1: Send OTP
+			console.error(`\nSending verification code to: ${email}`)
+			const {error: otpError} = await sdk.auth.signInWithOtp({
+				email,
+				options: {shouldCreateUser: false}
+			})
+
+			if (otpError) {
+				console.error(`✗ Error: ${otpError.message}`)
+				return {data: {success: false, error: otpError.message}, format: 'json'}
+			}
+
+			console.error('✓ Verification code sent!')
+			console.error('Check your email for a 6-digit code.\n')
+
+			// Step 2: Prompt for code
+			const code = await rl.question('Enter the 6-digit code: ')
+			const trimmedCode = code.trim()
+
+			if (!trimmedCode) {
+				console.error('✗ No code entered')
+				return {data: {success: false}, format: 'json'}
+			}
+
+			// Step 3: Verify OTP
+			console.error('\nVerifying code...')
+			const {data: verifyData, error: verifyError} = await sdk.auth.verifyOtp({
+				email,
+				token: trimmedCode,
+				type: 'email'
+			})
+
+			if (verifyError || !verifyData.session) {
+				console.error(
+					`✗ Verification failed: ${verifyError?.message || 'Invalid or expired code'}`
+				)
+				return {
+					data: {success: false, error: verifyError?.message},
+					format: 'json'
+				}
+			}
+
+			// Step 4: Save session
+			await saveSession(verifyData.session)
+
+			console.error('✓ Successfully authenticated!')
+			console.error(`\nLogged in as: ${verifyData.session.user.email}`)
 			console.error(
-				'Or add it to your shell profile (~/.bashrc, ~/.zshrc, etc.)\n'
+				'Session saved to ~/.config/radio4000/cli/credentials.json\n'
 			)
-		}
 
-		return {
-			data: {
-				user: authData.user,
-				message: 'Authenticated successfully'
-			},
-			format: 'json'
+			return {
+				data: {
+					success: true,
+					user: {
+						id: verifyData.session.user.id,
+						email: verifyData.session.user.email
+					},
+					message: 'Authenticated successfully'
+				},
+				format: 'json'
+			}
+		} finally {
+			rl.close()
 		}
 	},
 
-	examples: [
-		'r4 auth login --email "you@example.com" --password "yourpassword"'
-	]
+	examples: ['r4 auth login', 'r4 auth login --email "you@example.com"']
 }

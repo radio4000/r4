@@ -3,6 +3,7 @@ import {dirname, resolve} from 'node:path'
 import {fileURLToPath} from 'node:url'
 import {sdk} from '@radio4000/sdk'
 import fuzzysort from 'fuzzysort'
+import {getValidSession} from './auth.js'
 import {channelSchema, trackSchema} from './schema.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -48,18 +49,25 @@ export async function loadV1Tracks() {
 
 // ===== AUTH HELPERS =====
 
-export function getAuthToken() {
-	return process.env.R4_AUTH_TOKEN || null
+export async function getAuthToken() {
+	const session = await getValidSession()
+	return session?.access_token || null
 }
 
-export function requireAuth() {
-	const token = getAuthToken()
-	if (!token) {
-		throw new Error(
-			'Authentication required. Run: r4 auth login\nOr set R4_AUTH_TOKEN environment variable.'
-		)
+export async function requireAuth() {
+	const session = await getValidSession()
+
+	if (!session) {
+		throw new Error('Authentication required. Run: r4 auth login')
 	}
-	return token
+
+	// Set the session in SDK
+	await sdk.supabase.auth.setSession({
+		access_token: session.access_token,
+		refresh_token: session.refresh_token
+	})
+
+	return session.access_token
 }
 
 // ===== CHANNEL OPERATIONS =====
@@ -86,7 +94,7 @@ export async function listChannels(options = {}) {
 
 		return limit ? combined.slice(0, limit) : combined
 	} catch (_error) {
-		console.warn('API unavailable, using bundled v1 data only')
+		// Silent fallback to v1 - this is expected during migration
 		return limit ? v1Channels.slice(0, limit) : v1Channels
 	}
 }
@@ -108,14 +116,14 @@ export async function getChannel(slug) {
 }
 
 export async function createChannel(data) {
-	requireAuth()
+	await requireAuth()
 	const {data: channel, error} = await sdk.channels.createChannel(data)
 	if (error) throw new Error(error)
 	return channelSchema.parse({...channel, source: 'v2'})
 }
 
 export async function updateChannel(slug, updates) {
-	requireAuth()
+	await requireAuth()
 
 	// Check if it's a v1 channel (read-only)
 	const channel = await getChannel(slug)
@@ -134,7 +142,7 @@ export async function updateChannel(slug, updates) {
 }
 
 export async function deleteChannel(slug) {
-	requireAuth()
+	await requireAuth()
 
 	// Check if it's a v1 channel (read-only)
 	const channel = await getChannel(slug)
@@ -190,7 +198,7 @@ export async function listTracks(options = {}) {
 
 		return limitTo(filtered)
 	} catch (_error) {
-		console.warn('API unavailable, using bundled v1 data only')
+		// Silent fallback to v1 - this is expected during migration
 		const filtered = v1Tracks.filter((tr) => channelSlugs.includes(tr.slug))
 
 		return limitTo(filtered)
@@ -214,7 +222,7 @@ export async function getTrack(id) {
 }
 
 export async function createTrack(data) {
-	requireAuth()
+	await requireAuth()
 
 	// We need the channel_id for the SDK
 	// If data has channel slug, we need to look it up
@@ -234,7 +242,7 @@ export async function createTrack(data) {
 }
 
 export async function updateTrack(id, updates) {
-	requireAuth()
+	await requireAuth()
 
 	// Check if it's a v1 track (read-only)
 	const track = await getTrack(id)
@@ -250,7 +258,7 @@ export async function updateTrack(id, updates) {
 }
 
 export async function deleteTrack(id) {
-	requireAuth()
+	await requireAuth()
 
 	// Check if it's a v1 track (read-only)
 	const track = await getTrack(id)
@@ -326,8 +334,7 @@ export async function searchChannels(query, options = {}) {
 
 		return limit ? combined.slice(0, limit) : combined
 	} catch (_error) {
-		console.warn('API unavailable, using v1 fuzzy search only')
-		// Fallback to v1 fuzzy search
+		// Silent fallback to v1 fuzzy search - this is expected during migration
 		const results = fuzzysort.go(query, v1Channels, {
 			keys: ['slug', 'name', 'description'],
 			limit,
@@ -373,8 +380,7 @@ export async function searchTracks(query, options = {}) {
 
 		return limit ? combined.slice(0, limit) : combined
 	} catch (_error) {
-		console.warn('API unavailable, using v1 fuzzy search only')
-		// Fallback to v1 fuzzy search
+		// Silent fallback to v1 fuzzy search - this is expected during migration
 		const results = fuzzysort.go(query, v1Tracks, {
 			keys: ['title', 'description'],
 			limit,

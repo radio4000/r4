@@ -1,17 +1,41 @@
-import {signOut} from '../../lib/data.js'
+import {sdk} from '@radio4000/sdk'
+import {clearSession, loadSession} from '../../lib/auth.js'
 
 export default {
 	description: 'Sign out from Radio4000',
 
 	handler: async () => {
-		await signOut()
+		const session = await loadSession()
 
-		console.error('\n✓ Signed out successfully!\n')
-		console.error('Remember to unset your R4_AUTH_TOKEN environment variable:')
-		console.error('  unset R4_AUTH_TOKEN\n')
+		if (!session) {
+			console.error('✗ Not logged in')
+			return {
+				data: {success: false, message: 'Not logged in'},
+				format: 'json'
+			}
+		}
+
+		// Sign out from Supabase (invalidate session on server)
+		try {
+			await sdk.supabase.auth.setSession({
+				access_token: session.access_token,
+				refresh_token: session.refresh_token
+			})
+			await sdk.auth.signOut()
+		} catch {
+			// If server signout fails, still clear local session
+		}
+
+		// Clear local session
+		await clearSession()
+
+		console.error('\n✓ Signed out successfully!')
+		console.error(
+			'Session cleared from ~/.config/radio4000/cli/credentials.json\n'
+		)
 
 		return {
-			data: {message: 'Signed out successfully'},
+			data: {success: true, message: 'Signed out successfully'},
 			format: 'json'
 		}
 	},

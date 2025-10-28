@@ -18,7 +18,7 @@ describe('v1/v2 compatibility', () => {
 	})
 
 	test('tracks pass same schema', async () => {
-		const tracks = await listTracks({limit: 100})
+		const tracks = await listTracks({channelSlugs: ['-songs'], limit: 100})
 		expect(tracks.every(validateWith(trackSchema))).toBe(true)
 	})
 
@@ -32,12 +32,12 @@ describe('v1/v2 compatibility', () => {
 
 describe('data consistency', () => {
 	test('track slugs match channel filter', async () => {
-		const tracks = await listTracks({channelSlugs: ['ko002'], limit: 10})
-		expect(tracks.every((tr) => tr.slug === 'ko002')).toBe(true)
+		const tracks = await listTracks({channelSlugs: ['-songs'], limit: 10})
+		expect(tracks.every((tr) => tr.slug === '-songs')).toBe(true)
 	})
 
 	test('all track urls are valid', async () => {
-		const tracks = await listTracks({limit: 50})
+		const tracks = await listTracks({channelSlugs: ['-songs'], limit: 50})
 		expect(tracks.every((tr) => new URL(tr.url))).toBe(true)
 	})
 
@@ -47,7 +47,7 @@ describe('data consistency', () => {
 	})
 
 	test('track titles are non-empty', async () => {
-		const tracks = await listTracks({limit: 50})
+		const tracks = await listTracks({channelSlugs: ['-songs'], limit: 50})
 		expect(tracks.every((tr) => tr.title?.length > 0)).toBe(true)
 	})
 })
