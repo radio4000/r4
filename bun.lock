@@ -13,6 +13,7 @@
         "prompts": "^2.4.2",
         "radio4000-sdk": "^0.1.3",
         "sanitize-filename": "^1.6.3",
+        "zod": "^4.1.12",
       },
     },
   },
@@ -96,5 +97,7 @@
     "utf8-byte-length": ["utf8-byte-length@1.0.4", "", {}, "sha1-9F8VDExm7uloGGUFq5P8u4rWv2E="],
 
     "video-extensions": ["video-extensions@1.1.0", "", {}, "sha1-6qhrRfKahTwrhz6djiO1E3Epl9Y="],
+
+    "zod": ["zod@4.1.12", "", {}, "sha512-JInaHOamG8pt5+Ey8kGmdcAcg3OL9reK8ltczgHTAwNhMys/6ThXHityHxVV2p3fkw/c+MAvBHFVYHFZDmjMCQ=="],
   }
 }

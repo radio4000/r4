@@ -11,6 +11,14 @@ DESCRIPTION
        All data is normalized through a zod schema. Commands output
        JSON by default and can generate SQL for SQLite imports.
 
+   Data Sources
+       Read operations (list/view) use smart fallback:
+       1. Query v2 API (Supabase)
+       2. Fall back to bundled v1 data (read-only, ~600 channels)
+
+       Write operations (create/update/delete) only work with v2.
+       Attempting to modify v1 channels returns an error.
+
 COMMANDS
    Channel Operations
        r4 channel list
@@ -63,13 +71,18 @@ COMMANDS
        r4 add <url> [--channel <slug>]
               Smart track addition with metadata fetching
 
+   Download
+       r4 download <slug> [--output <dir>] [--dry-run]
+              Download all tracks from a channel using yt-dlp.
+              Works with both v1 and v2 channels (read-only operation).
+
 BACKLOG
        Search operations (or use: r4 track list --sql | rg <pattern>)
        r4 track search <query>
        r4 channel search <query>
 
 EXAMPLES
-       # View channels
+       # View channels (from v2 or bundled v1)
        r4 channel list
        r4 channel view ko002 oskar
 
@@ -93,6 +106,10 @@ EXAMPLES
        # Pipe and transform
        r4 track list --channel foo | jq '.[] | .title'
        r4 track list --channel old | jq 'map({title,url})' | r4 track create --channel new
+
+       # Download tracks
+       r4 download ko002
+       r4 download oskar --output ~/Music --dry-run
 
 SEE ALSO
        radio4000.com
