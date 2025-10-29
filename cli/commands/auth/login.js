@@ -79,7 +79,7 @@ export default {
 			await saveSession(verifyData.session)
 
 			console.error(`Authenticated as ${verifyData.session.user.email}`)
-			console.error('Session saved to ~/.config/radio4000/cli/credentials.json')
+			console.error('Session saved to ~/.config/radio4000/config.json')
 
 			return {
 				data: {

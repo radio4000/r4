@@ -50,7 +50,7 @@ describe('loadV1Tracks', () => {
 describe('auth', () => {
 	test('getAuthToken returns session token if available', async () => {
 		// Note: This test may return null if no saved session exists
-		// or return a token string if a session is saved in ~/.config/radio4000/cli/credentials.json
+		// or return a token string if a session is saved in ~/.config/radio4000/config.json
 		const token = await getAuthToken()
 		expect(token === null || typeof token === 'string').toBe(true)
 	})

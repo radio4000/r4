@@ -1,18 +1,11 @@
-import {mkdir, readFile, unlink, writeFile} from 'node:fs/promises'
-import {homedir} from 'node:os'
-import {join} from 'node:path'
 import {sdk} from '@radio4000/sdk'
-
-const CREDS_DIR = join(homedir(), '.config', 'radio4000', 'cli')
-const CREDS_FILE = join(CREDS_DIR, 'credentials.json')
+import {loadConfig, updateConfig} from './config.js'
 
 /**
- * Save authentication session to disk
+ * Save authentication session to config
  */
 export async function saveSession(session) {
-	await mkdir(CREDS_DIR, {recursive: true})
-
-	const credentials = {
+	const sessionData = {
 		access_token: session.access_token,
 		refresh_token: session.refresh_token,
 		expires_at: session.expires_at,
@@ -23,32 +16,33 @@ export async function saveSession(session) {
 		created_at: new Date().toISOString()
 	}
 
-	await writeFile(CREDS_FILE, JSON.stringify(credentials, null, 2))
-	return credentials
+	await updateConfig({
+		auth: {
+			session: sessionData
+		}
+	})
+
+	return sessionData
 }
 
 /**
- * Load authentication session from disk
+ * Load authentication session from config
  */
 export async function loadSession() {
-	try {
-		const content = await readFile(CREDS_FILE, 'utf-8')
-		return JSON.parse(content)
-	} catch {
-		return null
-	}
+	const config = await loadConfig()
+	return config.auth?.session || null
 }
 
 /**
  * Clear saved authentication session
  */
 export async function clearSession() {
-	try {
-		await unlink(CREDS_FILE)
-		return true
-	} catch {
-		return false
-	}
+	await updateConfig({
+		auth: {
+			session: null
+		}
+	})
+	return true
 }
 
 /**

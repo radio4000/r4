@@ -30,9 +30,7 @@ export default {
 		await clearSession()
 
 		console.error('Signed out successfully')
-		console.error(
-			'Session cleared from ~/.config/radio4000/cli/credentials.json'
-		)
+		console.error('Session cleared from ~/.config/radio4000/config.json')
 
 		return {
 			data: {success: true, message: 'Signed out successfully'},
