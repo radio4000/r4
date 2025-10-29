@@ -13,7 +13,25 @@ export function formatChannelText(channel) {
 	const createdDate = channel.created_at
 		? new Date(channel.created_at).toLocaleDateString()
 		: 'Unknown'
-	const websiteSection = channel.url ? `Website: ${channel.url}\n` : ''
+	const updatedDate = channel.updated_at
+		? new Date(channel.updated_at).toLocaleDateString()
+		: 'Unknown'
+
+	// Build optional sections
+	const sections = []
+
+	if (channel.url) sections.push(`Website: ${channel.url}`)
+	if (channel.image) sections.push(`Image: ${channel.image}`)
+	if (channel.latitude !== undefined)
+		sections.push(`Latitude: ${channel.latitude}`)
+	if (channel.longitude !== undefined)
+		sections.push(`Longitude: ${channel.longitude}`)
+	if (channel.track_count !== undefined)
+		sections.push(`Tracks: ${channel.track_count}`)
+	if (channel.firebase_id) sections.push(`Firebase ID: ${channel.firebase_id}`)
+
+	const optionalSections =
+		sections.length > 0 ? `  ${sections.join('\n  ')}\n` : ''
 
 	return `${titleLine}
 ${underline}
@@ -21,9 +39,12 @@ ${underline}
 ${description}
 
 Info:
+  ID: ${channel.id || 'N/A'}
   Slug: ${channel.slug}
+  Source: ${channel.source || 'N/A'}
   Created: ${createdDate}
-  ${websiteSection}`
+  Updated: ${updatedDate}
+${optionalSections}`
 }
 
 export default {
