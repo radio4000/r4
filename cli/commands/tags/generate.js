@@ -1,5 +1,5 @@
 import {existsSync} from 'node:fs'
-import {mkdir, readdir, rm, symlink} from 'node:fs/promises'
+import {mkdir, rm, symlink} from 'node:fs/promises'
 import {resolve} from 'node:path'
 import {getChannel, listTracks} from '../../lib/data.js'
 import {toExtension, toFilename} from '../../lib/download.js'

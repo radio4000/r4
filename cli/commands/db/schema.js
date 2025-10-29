@@ -33,7 +33,8 @@ const schemas = {
 
 const selectSchemas = (input) => {
 	const all = Object.keys(schemas)
-	const selected = input.channels || input.tracks ? all.filter((k) => input[k]) : all
+	const selected =
+		input.channels || input.tracks ? all.filter((k) => input[k]) : all
 	return selected.map((k) => schemas[k])
 }
 
