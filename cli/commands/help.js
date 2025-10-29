@@ -39,6 +39,7 @@ export default {
 		const groupTitles = {
 			channel: 'Channel Operations',
 			track: 'Track Operations',
+			tags: 'Tag Operations',
 			auth: 'Authentication',
 			General: 'General'
 		}

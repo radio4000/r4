@@ -1,0 +1,110 @@
+/**
+ * Tag utilities for extracting and organizing tags from tracks
+ * Tags are stored as hashtags in track.description (e.g., "#ambient #drone")
+ */
+
+/**
+ * Extract tags from a string (typically track.description or track.body)
+ * Tags are identified by # prefix and can contain letters, numbers, and hyphens
+ * @param {string} text - Text to extract tags from
+ * @returns {string[]} Array of tags without # prefix
+ */
+export function extractTags(text) {
+	if (!text || typeof text !== 'string') {
+		return []
+	}
+
+	// Match hashtags: # followed by alphanumeric, underscore, or hyphen
+	const tagRegex = /#([\w-]+)/g
+	const matches = text.matchAll(tagRegex)
+	const tags = []
+
+	for (const match of matches) {
+		// Extract tag without the # prefix, convert to lowercase
+		tags.push(match[1].toLowerCase())
+	}
+
+	return tags
+}
+
+/**
+ * Get unique tags from a list of tracks with their occurrence count
+ * @param {Array<{tags?: string[], description?: string, body?: string}>} tracks - Array of track objects
+ * @returns {{tags: string[], sortedTags: Array<[string, number]>, tagMap: Map<string, number>}}
+ */
+export function getUniqueTags(tracks) {
+	if (!Array.isArray(tracks)) {
+		return {tags: [], sortedTags: [], tagMap: new Map()}
+	}
+
+	const tagCounts = new Map()
+
+	for (const track of tracks) {
+		// Use parsed tags array if available, otherwise extract from text
+		let tags
+		if (track.tags && Array.isArray(track.tags)) {
+			tags = track.tags.map((t) => t.toLowerCase())
+		} else {
+			const text = track.description || track.body || ''
+			tags = extractTags(text)
+		}
+
+		for (const tag of tags) {
+			tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1)
+		}
+	}
+
+	// Get unique tags as sorted array
+	const tags = Array.from(tagCounts.keys()).sort((a, b) => a.localeCompare(b))
+
+	// Get tags sorted by occurrence (descending)
+	const sortedTags = Array.from(tagCounts.entries()).sort((a, b) => {
+		// Sort by count descending, then alphabetically
+		const countDiff = b[1] - a[1]
+		return countDiff !== 0 ? countDiff : a[0].localeCompare(b[0])
+	})
+
+	return {
+		tags, // Alphabetically sorted tags
+		sortedTags, // Tags sorted by count: [['ambient', 42], ['drone', 25], ...]
+		tagMap: tagCounts // Map for quick lookup
+	}
+}
+
+/**
+ * Get tracks that have specific tags
+ * @param {Array<{tags?: string[], description?: string, body?: string}>} tracks - Array of track objects
+ * @param {string[]} filterTags - Tags to filter by
+ * @param {boolean} matchAll - If true, track must have all tags; if false, any tag matches
+ * @returns {Array} Filtered tracks
+ */
+export function filterTracksByTags(tracks, filterTags, matchAll = false) {
+	if (!Array.isArray(tracks) || !Array.isArray(filterTags)) {
+		return []
+	}
+
+	const normalizedFilterTags = filterTags.map((t) => t.toLowerCase())
+
+	return tracks.filter((track) => {
+		// Use parsed tags array if available, otherwise extract from text
+		let trackTags
+		if (track.tags && Array.isArray(track.tags)) {
+			trackTags = track.tags.map((t) => t.toLowerCase())
+		} else {
+			const text = track.description || track.body || ''
+			trackTags = extractTags(text)
+		}
+
+		if (matchAll) {
+			// Track must have all filter tags
+			return normalizedFilterTags.every((filterTag) =>
+				trackTags.includes(filterTag)
+			)
+		} else {
+			// Track must have at least one filter tag
+			return normalizedFilterTags.some((filterTag) =>
+				trackTags.includes(filterTag)
+			)
+		}
+	})
+}
