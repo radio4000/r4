@@ -1,3 +1,4 @@
+import {formatResult} from '../../lib/command-helpers.js'
 import {formatOption} from '../../lib/common-options.js'
 import {listTracks} from '../../lib/data.js'
 
@@ -77,11 +78,7 @@ export default {
 		}
 
 		// For json/sql, return raw data
-		return {
-			data: tracks,
-			format: format,
-			formatOptions: format === 'sql' ? {table: 'tracks'} : undefined
-		}
+		return formatResult(tracks, format, 'tracks')
 	},
 
 	examples: [

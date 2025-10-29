@@ -4,9 +4,9 @@ import {appendFile, mkdir, utimes, writeFile} from 'node:fs/promises'
 import ffmetadata from 'ffmetadata'
 import filenamify from 'filenamify'
 import getArtistTitle from 'get-artist-title'
-import pLimit from '../../lib/p-limit-custom.js'
 import {formatChannelText} from '../commands/channel/view.js'
 import {formatTrackText} from '../commands/track/list.js'
+import pLimit from './p-limit-custom.js'
 
 /**
  * Download pipeline for Radio4000 tracks

@@ -99,6 +99,15 @@ function parseOptionValues(optionDefs, values) {
 			)
 		}
 
+		// For required boolean options, ensure the value is true
+		if (def.required && def.type === 'boolean' && hasValue && value !== true) {
+			throw new CLIError(
+				ErrorTypes.INVALID_ARGUMENT,
+				`Option --${name} must be true (received: ${value})`,
+				{option: name, value, definition: def}
+			)
+		}
+
 		// Use default if not provided
 		if (!hasValue) {
 			if (def.default !== undefined) {

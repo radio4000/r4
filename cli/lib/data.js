@@ -16,33 +16,58 @@ const V1_TRACKS_PATH = resolve(__dirname, '../data/tracks_v1.json')
 let v1ChannelsCache = null
 let v1TracksCache = null
 
+// ===== HELPERS =====
+
+const parse = (schema, source) => (item) => schema.parse({...item, source})
+
+const tryParse = (schema, source) => (item) => {
+	try {
+		return parse(schema, source)(item)
+	} catch {
+		return null
+	}
+}
+
+const v2WithV1Fallback = async (v2Fn, v1Data, combiner) => {
+	try {
+		const v2Result = await v2Fn()
+		return combiner ? combiner(v2Result, v1Data) : v2Result
+	} catch {
+		return v1Data
+	}
+}
+
+const channelNotFound = (slugs) => {
+	const error = new Error(
+		`Channel${slugs.length > 1 ? 's' : ''} not found: ${slugs.join(', ')}`
+	)
+	error.code = 'CHANNEL_NOT_FOUND'
+	error.statusCode = 404
+	return error
+}
+
+const rejectV1Mutation = (type, id) => {
+	throw new Error(
+		`Cannot modify v1 ${type}: ${id}. This is a read-only archived ${type}.`
+	)
+}
+
+const limit = (items, n) => (n ? items.slice(0, n) : items)
+
 // ===== V1 DATA LOADERS =====
 
 export async function loadV1Channels() {
 	if (v1ChannelsCache) return v1ChannelsCache
-
 	const content = await readFile(V1_CHANNELS_PATH, 'utf-8')
-	const channels = JSON.parse(content)
-	v1ChannelsCache = channels.map((ch) =>
-		channelSchema.parse({...ch, source: 'v1'})
-	)
+	v1ChannelsCache = JSON.parse(content).map(parse(channelSchema, 'v1'))
 	return v1ChannelsCache
 }
 
 export async function loadV1Tracks() {
 	if (v1TracksCache) return v1TracksCache
-
 	const content = await readFile(V1_TRACKS_PATH, 'utf-8')
-	const tracks = JSON.parse(content)
-	// Filter out invalid tracks (v1 data may have empty/invalid URLs)
-	v1TracksCache = tracks
-		.map((tr) => {
-			try {
-				return trackSchema.parse({...tr, source: 'v1'})
-			} catch {
-				return null // Skip invalid tracks
-			}
-		})
+	v1TracksCache = JSON.parse(content)
+		.map(tryParse(trackSchema, 'v1'))
 		.filter(Boolean)
 	return v1TracksCache
 }
@@ -73,44 +98,33 @@ export async function requireAuth() {
 // ===== CHANNEL OPERATIONS =====
 
 export async function listChannels(options = {}) {
-	const {limit} = options
-
-	// Always load v1 channels
 	const v1Channels = await loadV1Channels()
 
-	try {
-		// Try to get v2 channels
-		const {data: v2Data, error} = await sdk.channels.readChannels()
-		if (error) throw new Error(error)
-
-		const v2Channels = v2Data.map((ch) =>
-			channelSchema.parse({...ch, source: 'v2'})
-		)
-
-		// Combine: v2 takes priority over v1 for duplicate slugs
-		const v2Slugs = new Set(v2Channels.map((ch) => ch.slug))
-		const v1Only = v1Channels.filter((ch) => !v2Slugs.has(ch.slug))
-		const combined = [...v2Channels, ...v1Only]
-
-		return limit ? combined.slice(0, limit) : combined
-	} catch (_error) {
-		// Silent fallback to v1 - this is expected during migration
-		return limit ? v1Channels.slice(0, limit) : v1Channels
-	}
+	return v2WithV1Fallback(
+		async () => {
+			const {data, error} = await sdk.channels.readChannels()
+			if (error) throw new Error(error)
+			return data.map(parse(channelSchema, 'v2'))
+		},
+		limit(v1Channels, options.limit),
+		(v2Channels, v1) => {
+			const v2Slugs = new Set(v2Channels.map((ch) => ch.slug))
+			return limit(
+				[...v2Channels, ...v1.filter((ch) => !v2Slugs.has(ch.slug))],
+				options.limit
+			)
+		}
+	)
 }
 
 export async function getChannel(slug) {
 	try {
-		const {data: channel, error} = await sdk.channels.readChannel(slug)
+		const {data, error} = await sdk.channels.readChannel(slug)
 		if (error) throw new Error(error)
-		return channelSchema.parse({...channel, source: 'v2'})
-	} catch (_error) {
-		// Fall back to v1
-		const v1Channels = await loadV1Channels()
-		const channel = v1Channels.find((ch) => ch.slug === slug)
-		if (!channel) {
-			throw new Error(`Channel not found: ${slug}`)
-		}
+		return parse(channelSchema, 'v2')(data)
+	} catch {
+		const channel = (await loadV1Channels()).find((ch) => ch.slug === slug)
+		if (!channel) throw new Error(`Channel not found: ${slug}`)
 		return channel
 	}
 }
@@ -119,38 +133,23 @@ export async function createChannel(data) {
 	await requireAuth()
 	const {data: channel, error} = await sdk.channels.createChannel(data)
 	if (error) throw new Error(error)
-	return channelSchema.parse({...channel, source: 'v2'})
+	return parse(channelSchema, 'v2')(channel)
 }
 
 export async function updateChannel(slug, updates) {
 	await requireAuth()
-
-	// Check if it's a v1 channel (read-only)
 	const channel = await getChannel(slug)
-	if (channel.source === 'v1') {
-		throw new Error(
-			`Cannot modify v1 channel: ${slug}. This is a read-only archived channel.`
-		)
-	}
+	if (channel.source === 'v1') rejectV1Mutation('channel', slug)
 
-	const {data: updated, error} = await sdk.channels.updateChannel(
-		channel.id,
-		updates
-	)
+	const {data, error} = await sdk.channels.updateChannel(channel.id, updates)
 	if (error) throw new Error(error)
-	return channelSchema.parse({...updated, source: 'v2'})
+	return parse(channelSchema, 'v2')(data)
 }
 
 export async function deleteChannel(slug) {
 	await requireAuth()
-
-	// Check if it's a v1 channel (read-only)
 	const channel = await getChannel(slug)
-	if (channel.source === 'v1') {
-		throw new Error(
-			`Cannot delete v1 channel: ${slug}. This is a read-only archived channel.`
-		)
-	}
+	if (channel.source === 'v1') rejectV1Mutation('channel', slug)
 
 	const {error} = await sdk.channels.deleteChannel(channel.id)
 	if (error) throw new Error(error)
@@ -159,54 +158,47 @@ export async function deleteChannel(slug) {
 
 // ===== TRACK OPERATIONS =====
 
-const applyLimit = (limit) => (items) => (limit ? items.slice(0, limit) : items)
-
-const parseTrack = (source) => (tr) => trackSchema.parse({...tr, source})
-
 const fetchChannelTracks = async (slug) => {
-	const {data: tracks, error} = await sdk.channels.readChannelTracks(slug)
+	const {data, error} = await sdk.channels.readChannelTracks(slug)
 	if (error) throw new Error(error)
-	return tracks
+	return data
+}
+
+const logInvalidTracks = (tracks) => {
+	if (tracks.length === 0) return
+	console.error(`Warning: Skipped ${tracks.length} invalid track(s):`)
+	tracks.forEach((t) => {
+		console.error(`  "${t.title}"`)
+		console.error(`    URL: ${t.url}`)
+		console.error(`    Reason: ${t.error}`)
+		console.error(`    Fix: r4 track edit ${t.id}`)
+	})
 }
 
 export async function listTracks(options = {}) {
-	const {channelSlugs, limit} = options
-	const limitTo = applyLimit(limit)
+	const {channelSlugs, limit: maxItems} = options
 
-	// Require channelSlugs
-	if (!channelSlugs || channelSlugs.length === 0) {
+	if (!channelSlugs?.length) {
 		throw new Error(
 			'channelSlugs required. Specify at least one channel to list tracks from.'
 		)
 	}
 
-	// Always load v1 tracks and channels for validation
 	const v1Tracks = await loadV1Tracks()
-	const v1Channels = await loadV1Channels()
+	const v1Slugs = new Set((await loadV1Channels()).map((ch) => ch.slug))
 
-	// Validate that all channels exist (in v1 or v2)
-	const v1Slugs = new Set(v1Channels.map((ch) => ch.slug))
+	const validateChannels = (v2Slugs = new Set()) => {
+		const missing = channelSlugs.filter(
+			(s) => !v1Slugs.has(s) && !v2Slugs.has(s)
+		)
+		if (missing.length) throw channelNotFound(missing)
+	}
 
 	try {
-		// Try to get v2 channels to validate existence
 		const {data: v2Data} = await sdk.channels.readChannels()
 		const v2Slugs = new Set(v2Data?.map((ch) => ch.slug) || [])
+		validateChannels(v2Slugs)
 
-		// Check for nonexistent channels
-		const nonexistent = channelSlugs.filter(
-			(slug) => !v1Slugs.has(slug) && !v2Slugs.has(slug)
-		)
-
-		if (nonexistent.length > 0) {
-			const error = new Error(
-				`Channel${nonexistent.length > 1 ? 's' : ''} not found: ${nonexistent.join(', ')}`
-			)
-			error.code = 'CHANNEL_NOT_FOUND'
-			error.statusCode = 404
-			throw error
-		}
-
-		// Fetch v2 tracks for specified channels
 		const rawTracks = (
 			await Promise.all(channelSlugs.map(fetchChannelTracks))
 		).flat()
@@ -215,9 +207,8 @@ export async function listTracks(options = {}) {
 		const v2Tracks = rawTracks
 			.map((tr) => {
 				try {
-					return parseTrack('v2')(tr)
+					return parse(trackSchema, 'v2')(tr)
 				} catch (error) {
-					// Collect invalid tracks for reporting
 					invalidTracks.push({
 						id: tr.id,
 						title: tr.title,
@@ -229,64 +220,30 @@ export async function listTracks(options = {}) {
 			})
 			.filter(Boolean)
 
-		// Log warning about invalid tracks
-		if (invalidTracks.length > 0) {
-			console.error(
-				`Warning: Skipped ${invalidTracks.length} invalid track(s):`
-			)
-			invalidTracks.forEach((t) => {
-				console.error(`  "${t.title}"`)
-				console.error(`    URL: ${t.url}`)
-				console.error(`    Reason: ${t.error}`)
-				console.error(`    Fix: r4 track edit ${t.id}`)
-			})
-		}
+		logInvalidTracks(invalidTracks)
 
-		// Combine v2 + v1 tracks
-		// Note: v1 tracks from migrated channels have been pre-cleaned, so no deduplication needed
-		const combined = [...v2Tracks, ...v1Tracks]
-
-		// Filter by channel slugs
-		const filtered = combined.filter((tr) => channelSlugs.includes(tr.slug))
-
-		return limitTo(filtered)
+		return limit(
+			[...v2Tracks, ...v1Tracks].filter((tr) => channelSlugs.includes(tr.slug)),
+			maxItems
+		)
 	} catch (error) {
-		// Re-throw validation errors
-		if (error.code === 'CHANNEL_NOT_FOUND') {
-			throw error
-		}
-
-		// For other errors, fall back to v1 but still validate channels exist
-		const nonexistent = channelSlugs.filter((slug) => !v1Slugs.has(slug))
-
-		if (nonexistent.length > 0) {
-			const notFoundError = new Error(
-				`Channel${nonexistent.length > 1 ? 's' : ''} not found: ${nonexistent.join(', ')}`
-			)
-			notFoundError.code = 'CHANNEL_NOT_FOUND'
-			notFoundError.statusCode = 404
-			throw notFoundError
-		}
-
-		// Silent fallback to v1 - this is expected during migration
-		const filtered = v1Tracks.filter((tr) => channelSlugs.includes(tr.slug))
-
-		return limitTo(filtered)
+		if (error.code === 'CHANNEL_NOT_FOUND') throw error
+		validateChannels()
+		return limit(
+			v1Tracks.filter((tr) => channelSlugs.includes(tr.slug)),
+			maxItems
+		)
 	}
 }
 
 export async function getTrack(id) {
 	try {
-		const {data: track, error} = await sdk.tracks.readTrack(id)
+		const {data, error} = await sdk.tracks.readTrack(id)
 		if (error) throw new Error(error)
-		return trackSchema.parse({...track, source: 'v2'})
-	} catch (_error) {
-		// Fall back to v1
-		const v1Tracks = await loadV1Tracks()
-		const track = v1Tracks.find((tr) => tr.id === id)
-		if (!track) {
-			throw new Error(`Track not found: ${id}`)
-		}
+		return parse(trackSchema, 'v2')(data)
+	} catch {
+		const track = (await loadV1Tracks()).find((tr) => tr.id === id)
+		if (!track) throw new Error(`Track not found: ${id}`)
 		return track
 	}
 }
@@ -294,183 +251,93 @@ export async function getTrack(id) {
 export async function createTrack(data) {
 	await requireAuth()
 
-	// We need the channel_id for the SDK
-	// If data has channel slug, we need to look it up
-	let channelId = data.channel_id
-	if (!channelId && data.slug) {
-		const channel = await getChannel(data.slug)
-		channelId = channel.id
-	}
-
-	if (!channelId) {
-		throw new Error('channel_id or channel slug required')
-	}
+	const channelId =
+		data.channel_id || (data.slug ? (await getChannel(data.slug)).id : null)
+	if (!channelId) throw new Error('channel_id or channel slug required')
 
 	const {data: track, error} = await sdk.tracks.createTrack(channelId, data)
 	if (error) throw new Error(error)
-	return trackSchema.parse({...track, source: 'v2'})
+	return parse(trackSchema, 'v2')(track)
 }
 
 export async function updateTrack(id, updates) {
 	await requireAuth()
-
-	// Check if it's a v1 track (read-only)
 	const track = await getTrack(id)
-	if (track.source === 'v1') {
-		throw new Error(
-			`Cannot modify v1 track: ${id}. This is a read-only archived track.`
-		)
-	}
+	if (track.source === 'v1') rejectV1Mutation('track', id)
 
-	const {data: updated, error} = await sdk.tracks.updateTrack(id, updates)
+	const {data, error} = await sdk.tracks.updateTrack(id, updates)
 	if (error) throw new Error(error)
-	return trackSchema.parse({...updated, source: 'v2'})
+	return parse(trackSchema, 'v2')(data)
 }
 
 export async function deleteTrack(id) {
 	await requireAuth()
-
-	// Check if it's a v1 track (read-only)
 	const track = await getTrack(id)
-	if (track.source === 'v1') {
-		throw new Error(
-			`Cannot delete v1 track: ${id}. This is a read-only archived track.`
-		)
-	}
+	if (track.source === 'v1') rejectV1Mutation('track', id)
 
 	const {error} = await sdk.tracks.deleteTrack(id)
 	if (error) throw new Error(error)
 	return {success: true, id}
 }
 
-// ===== AUTH OPERATIONS =====
-
-export async function signIn(email, password) {
-	const {data, error} = await sdk.auth.signIn({email, password})
-	if (error) throw new Error(error)
-	return data
-}
-
-export async function signOut() {
-	const {error} = await sdk.auth.signOut()
-	if (error) throw new Error(error)
-	return {success: true}
-}
-
-export async function readUser() {
-	const token = getAuthToken()
-	if (!token) return null
-
-	const {data, error} = await sdk.users.readUser(token)
-	if (error) throw new Error(error)
-	return data
-}
-
 // ===== SEARCH OPERATIONS =====
 
-export async function searchChannels(query, options = {}) {
-	const {limit, threshold = -10000} = options
-
-	// Always load v1 for fallback/supplement
-	const v1Channels = await loadV1Channels()
-
-	try {
-		// Use SDK full-text search on API
-		const {data, error} = await sdk.supabase
-			.from('channels')
-			.select()
-			.textSearch('fts', `'${query}':*`)
-
-		if (error) throw new Error(error.message)
-
-		// Parse API results
-		const apiResults = data.map((ch) =>
-			channelSchema.parse({...ch, source: 'v2'})
-		)
-
-		// Also do fuzzy search on v1 data
-		const v1Results = fuzzysort
-			.go(query, v1Channels, {
-				keys: ['slug', 'name', 'description'],
-				threshold,
-				all: false
-			})
-			.map((r) => r.obj)
-
-		// Combine: API first, then v1 results not already in API
-		const apiSlugs = new Set(apiResults.map((ch) => ch.slug))
-		const v1Only = v1Results.filter((ch) => !apiSlugs.has(ch.slug))
-		const combined = [...apiResults, ...v1Only]
-
-		return limit ? combined.slice(0, limit) : combined
-	} catch (_error) {
-		// Silent fallback to v1 fuzzy search - this is expected during migration
-		const results = fuzzysort.go(query, v1Channels, {
-			keys: ['slug', 'name', 'description'],
-			limit,
-			threshold,
-			all: false
+const fuzzySearch = (query, items, keys, options) =>
+	fuzzysort
+		.go(query, items, {
+			keys,
+			threshold: options.threshold || -10000,
+			all: false,
+			limit: options.limit
 		})
-		return results.map((r) => r.obj)
-	}
+		.map((r) => r.obj)
+
+export async function searchChannels(query, options = {}) {
+	const v1Channels = await loadV1Channels()
+	const keys = ['slug', 'name', 'description']
+
+	return v2WithV1Fallback(
+		async () => {
+			const {data, error} = await sdk.supabase
+				.from('channels')
+				.select()
+				.textSearch('fts', `'${query}':*`)
+			if (error) throw new Error(error.message)
+			return data.map(parse(channelSchema, 'v2'))
+		},
+		fuzzySearch(query, v1Channels, keys, options),
+		(v2Results, v1Results) => {
+			const v2Slugs = new Set(v2Results.map((ch) => ch.slug))
+			return limit(
+				[...v2Results, ...v1Results.filter((ch) => !v2Slugs.has(ch.slug))],
+				options.limit
+			)
+		}
+	)
 }
 
 export async function searchTracks(query, options = {}) {
-	const {limit, threshold = -10000} = options
-
-	// Always load v1 for fallback/supplement
 	const v1Tracks = await loadV1Tracks()
+	const keys = ['title', 'description']
 
-	try {
-		// Use SDK full-text search on API (channel_tracks table)
-		const {data, error} = await sdk.supabase
-			.from('channel_tracks')
-			.select()
-			.textSearch('fts', `'${query}':*`)
-
-		if (error) throw new Error(error.message)
-
-		// Parse API results
-		const apiResults = data.map((tr) =>
-			trackSchema.parse({...tr, source: 'v2'})
-		)
-
-		// Also do fuzzy search on v1 data
-		const v1Results = fuzzysort
-			.go(query, v1Tracks, {
-				keys: ['title', 'description'],
-				threshold,
-				all: false
-			})
-			.map((r) => r.obj)
-
-		// Combine: API first, then v1 results
-		// Note: v1 tracks from migrated channels are already cleaned, minimal overlap expected
-		const combined = [...apiResults, ...v1Results]
-
-		return limit ? combined.slice(0, limit) : combined
-	} catch (_error) {
-		// Silent fallback to v1 fuzzy search - this is expected during migration
-		const results = fuzzysort.go(query, v1Tracks, {
-			keys: ['title', 'description'],
-			limit,
-			threshold,
-			all: false
-		})
-		return results.map((r) => r.obj)
-	}
+	return v2WithV1Fallback(
+		async () => {
+			const {data, error} = await sdk.supabase
+				.from('channel_tracks')
+				.select()
+				.textSearch('fts', `'${query}':*`)
+			if (error) throw new Error(error.message)
+			return data.map(parse(trackSchema, 'v2'))
+		},
+		fuzzySearch(query, v1Tracks, keys, options),
+		(v2Results, v1Results) => limit([...v2Results, ...v1Results], options.limit)
+	)
 }
 
 export async function searchAll(query, options = {}) {
-	const {limit} = options
-
 	const [channels, tracks] = await Promise.all([
 		searchChannels(query, options),
 		searchTracks(query, options)
 	])
-
-	return {
-		channels: limit ? channels.slice(0, limit) : channels,
-		tracks: limit ? tracks.slice(0, limit) : tracks
-	}
+	return {channels, tracks}
 }

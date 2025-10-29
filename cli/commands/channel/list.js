@@ -1,3 +1,4 @@
+import {formatResult} from '../../lib/command-helpers.js'
 import {formatOption} from '../../lib/common-options.js'
 import {listChannels} from '../../lib/data.js'
 
@@ -16,13 +17,8 @@ export default {
 	handler: async (input) => {
 		// Use default limit of 100 if not specified
 		const limit = input.limit ?? 100
-		const format = input.format || 'json'
-
-		return {
-			data: await listChannels({limit}),
-			format: format,
-			formatOptions: format === 'sql' ? {table: 'channels'} : undefined
-		}
+		const channels = await listChannels({limit})
+		return formatResult(channels, input.format, 'channels')
 	},
 
 	examples: [

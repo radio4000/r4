@@ -1,3 +1,4 @@
+import {formatResult} from '../../lib/command-helpers.js'
 import {sqlOption} from '../../lib/common-options.js'
 import {createChannel} from '../../lib/data.js'
 import {channelSchema} from '../../lib/schema.js'
@@ -46,12 +47,7 @@ export default {
 		}
 
 		const channel = await createChannel(channelData)
-
-		return {
-			data: channel,
-			format: input.sql ? 'sql' : 'json',
-			formatOptions: input.sql ? {table: 'channels'} : undefined
-		}
+		return formatResult(channel, input.sql ? 'sql' : 'json', 'channels')
 	},
 
 	examples: [

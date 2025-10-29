@@ -1,6 +1,6 @@
 import {
+	formatResult,
 	requireUpdates,
-	singleOrMultiple,
 	toArray
 } from '../../lib/command-helpers.js'
 import {sqlOption} from '../../lib/common-options.js'
@@ -48,11 +48,9 @@ export default {
 			slugs.map((slug) => updateChannel(slug, updates))
 		)
 
-		return {
-			data: singleOrMultiple(channels),
-			format: input.sql ? 'sql' : 'json',
-			formatOptions: input.sql ? {table: 'channels'} : undefined
-		}
+		return formatResult(channels, input.sql ? 'sql' : 'json', 'channels', {
+			asSingle: true
+		})
 	},
 
 	examples: [

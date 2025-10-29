@@ -1,4 +1,4 @@
-import {singleOrMultiple, toArray} from '../../lib/command-helpers.js'
+import {formatResult, toArray} from '../../lib/command-helpers.js'
 import {formatOption} from '../../lib/common-options.js'
 import {getChannel} from '../../lib/data.js'
 
@@ -76,11 +76,7 @@ export default {
 		}
 
 		// For json/sql, return raw data
-		return {
-			data: singleOrMultiple(channels),
-			format: format,
-			formatOptions: format === 'sql' ? {table: 'channels'} : undefined
-		}
+		return formatResult(channels, format, 'channels', {asSingle: true})
 	},
 
 	examples: [

@@ -1,4 +1,4 @@
-import {singleOrMultiple, toArray} from '../../lib/command-helpers.js'
+import {formatResult, toArray} from '../../lib/command-helpers.js'
 import {sqlOption} from '../../lib/common-options.js'
 import {deleteChannel} from '../../lib/data.js'
 
@@ -27,11 +27,9 @@ export default {
 		const slugs = toArray(input.slug)
 		const results = await Promise.all(slugs.map((slug) => deleteChannel(slug)))
 
-		return {
-			data: singleOrMultiple(results),
-			format: input.sql ? 'sql' : 'json',
-			formatOptions: input.sql ? {table: 'channels'} : undefined
-		}
+		return formatResult(results, input.sql ? 'sql' : 'json', 'channels', {
+			asSingle: true
+		})
 	},
 
 	examples: ['r4 channel delete mysounds', 'r4 channel delete ch1 ch2 ch3']

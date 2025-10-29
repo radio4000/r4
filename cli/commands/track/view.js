@@ -1,4 +1,4 @@
-import {singleOrMultiple, toArray} from '../../lib/command-helpers.js'
+import {formatResult, toArray} from '../../lib/command-helpers.js'
 import {formatOption} from '../../lib/common-options.js'
 import {getTrack} from '../../lib/data.js'
 
@@ -19,13 +19,8 @@ export default {
 	handler: async (input) => {
 		const ids = toArray(input.id)
 		const tracks = await Promise.all(ids.map((id) => getTrack(id)))
-		const format = input.format || 'json'
 
-		return {
-			data: singleOrMultiple(tracks),
-			format: format,
-			formatOptions: format === 'sql' ? {table: 'tracks'} : undefined
-		}
+		return formatResult(tracks, input.format, 'tracks', {asSingle: true})
 	},
 
 	examples: [

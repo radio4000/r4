@@ -30,3 +30,21 @@ export function requireUpdates(updates) {
 		throw new Error('At least one field must be provided for update')
 	}
 }
+
+/**
+ * Format command result with standardized output structure
+ * @param {*} data - Data to return
+ * @param {string} format - Output format (json, text, sql, etc.)
+ * @param {string} tableName - Table name for SQL format
+ * @param {Object} options - Additional options
+ * @param {boolean} options.asSingle - If true, unwrap single-item arrays
+ * @returns {Object} Formatted result object {data, format, formatOptions}
+ */
+export function formatResult(data, format, tableName, options = {}) {
+	const {asSingle = false} = options
+	return {
+		data: asSingle ? singleOrMultiple(data) : data,
+		format: format || 'json',
+		formatOptions: format === 'sql' ? {table: tableName} : undefined
+	}
+}

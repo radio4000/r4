@@ -1,6 +1,6 @@
 import {
+	formatResult,
 	requireUpdates,
-	singleOrMultiple,
 	toArray
 } from '../../lib/command-helpers.js'
 import {sqlOption} from '../../lib/common-options.js'
@@ -41,11 +41,9 @@ export default {
 
 		const tracks = await Promise.all(ids.map((id) => updateTrack(id, updates)))
 
-		return {
-			data: singleOrMultiple(tracks),
-			format: input.sql ? 'sql' : 'json',
-			formatOptions: input.sql ? {table: 'tracks'} : undefined
-		}
+		return formatResult(tracks, input.sql ? 'sql' : 'json', 'tracks', {
+			asSingle: true
+		})
 	},
 
 	examples: [
