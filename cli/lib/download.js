@@ -389,7 +389,7 @@ export async function setFileTimestamps(
 // ============================================================================
 
 /**
- * Write channel ABOUT.txt file
+ * Write channel about file (named after channel slug)
  * Uses the same text format as `r4 channel view --format text`
  */
 export async function writeChannelAbout(
@@ -398,7 +398,7 @@ export async function writeChannelAbout(
 	folderPath,
 	{verbose = false} = {}
 ) {
-	const filepath = `${folderPath}/ABOUT.txt`
+	const filepath = `${folderPath}/${channel.slug}.txt`
 
 	// Use the same formatter as channel view command
 	let content = formatChannelText(channel)
@@ -418,7 +418,7 @@ Quick Access:
 	await writeFile(filepath, content, 'utf-8')
 
 	if (verbose) {
-		console.log('Wrote ABOUT.txt:', filepath)
+		console.log(`Wrote ${channel.slug}.txt:`, filepath)
 	}
 
 	return filepath

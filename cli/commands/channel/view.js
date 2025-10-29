@@ -4,7 +4,7 @@ import {getChannel} from '../../lib/data.js'
 
 /**
  * Format a single channel as human-readable text
- * Used by: r4 channel view --format text and ABOUT.txt in downloads
+ * Used by: r4 channel view --format text and <slug>.txt in downloads
  */
 export function formatChannelText(channel) {
 	const titleLine = channel.name || 'Untitled Channel'

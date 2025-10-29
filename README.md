@@ -7,7 +7,6 @@ r4 - Radio4000 command-line interface
 ```
 r4 <command> [<subcommand>] [<args>] [options]
 r4 help
-r4 version
 ```
 
 # DESCRIPTION
@@ -46,7 +45,7 @@ Show current authenticated user
 ## channel - Channel Operations
 
 ### channel list
-List all channels (from v2 API or bundled v1 data)
+List channels (from Radio4000 db including v1 data)
 
 **Usage:** `r4 channel list [options]`
 
@@ -60,6 +59,7 @@ r4 channel list
 r4 channel list --limit 10
 r4 channel list --limit 100 --format sql
 r4 channel list --format json
+r4 channel list ko002 --format text
 ```
 
 ### channel view
@@ -205,6 +205,26 @@ r4 download ko002 --force
 r4 download ko002 --no-metadata
 ```
 
+## db - Database Operations
+
+### db schema
+
+Output SQL CREATE TABLE statements for channels and tracks
+
+**Usage:** `r4 db schema [options]`
+
+**Options:**
+- `--channels` - Output only channels schema
+- `--tracks` - Output only tracks schema
+
+**Examples:**
+```bash
+r4 db schema
+r4 db schema --channels
+r4 db schema --tracks
+r4 db schema | sqlite3 my.db
+```
+
 ## search - Search
 
 Search channels and tracks
@@ -263,9 +283,13 @@ r4 outputs JSON by default, making it easy to pipe to other tools:
 r4 track list --channel foo --format json | jq '.[] | .title'
 r4 channel list --limit 10 | jq '.[].slug'
 
-# Export to SQLite database
-r4 channel list --limit 1000 --format sql | sqlite3 channels.db
-r4 track list --channel mysounds --format sql | sqlite3 tracks.db
+# Export to SQLite database (2 commands, boom!)
+r4 db schema | sqlite3 my.db
+r4 track list --channel ko002 --format sql | sqlite3 my.db
+
+# Add more channels to the same database
+r4 track list --channel oskar --format sql | sqlite3 my.db
+r4 channel list --limit 1000 --format sql | sqlite3 my.db
 
 # Pipe JSON input to create command
 echo '{"title":"Song","url":"..."}' | r4 track create --channel mysounds

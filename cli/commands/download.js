@@ -83,7 +83,7 @@ export default {
 
 			console.log(`${folderPath}/`)
 			await writeChannelAbout(channel, tracks, folderPath, {verbose})
-			console.log('├── ABOUT.txt')
+			console.log(`├── ${channel.slug}.txt`)
 			await writeChannelImageUrl(channel, folderPath, {verbose})
 			console.log('├── image.url')
 			await writeTracksPlaylist(tracks, folderPath, {verbose})
