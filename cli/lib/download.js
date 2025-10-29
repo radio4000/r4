@@ -4,6 +4,9 @@ import {mkdir, utimes, writeFile} from 'node:fs/promises'
 import ffmetadata from 'ffmetadata'
 import filenamify from 'filenamify'
 import getArtistTitle from 'get-artist-title'
+import pLimit from '../../lib/p-limit-custom.js'
+import {formatTrackText} from '../commands/track/list.js'
+import {formatChannelText} from '../commands/channel/view.js'
 
 /**
  * Download pipeline for Radio4000 tracks
@@ -46,41 +49,66 @@ export function filterTracks(tracks, {force = false} = {}) {
  * Returns summary of successes and failures
  */
 export async function downloadBatch(tracks, folderPath, options = {}) {
-	const {dryRun = false, debug = false, writeMetadata = true} = options
+	const {dryRun = false, verbose = false, writeMetadata = true, concurrency = 3} = options
 	const successes = []
 	const failures = []
 
-	for (const [index, track] of tracks.entries()) {
-		const progress = `[${index + 1}/${tracks.length}]`
+	// Validate and clamp concurrency
+	const clampedConcurrency = Math.max(1, Math.min(10, concurrency))
 
-		try {
-			if (dryRun) {
-				console.log(progress, 'Would download:', track.title)
-				successes.push(track)
-				continue
+	// Sequential processing for dry run
+	if (dryRun) {
+		for (const [index, track] of tracks.entries()) {
+			// Only show first 3 tracks for dry run
+			if (index < 3) {
+				console.log(`  ${track.title}`)
 			}
-
-			await downloadTrack(track, folderPath, {debug})
-
-			if (writeMetadata) {
-				await writeTrackMetadata(track, {debug})
-			}
-
-			await writeTrackMetadataFile(track, {debug})
-
-			await setFileTimestamps(track.filepath, track, {debug})
-
-			const txtFilepath = track.filepath.replace(/\.[^.]+$/, '.txt')
-			await setFileTimestamps(txtFilepath, track, {debug})
-
-			console.log(progress, 'Downloaded:', track.filepath)
 			successes.push(track)
-		} catch (error) {
-			console.error(progress, 'Failed:', track.title)
-			debug && console.error(error.message)
-			failures.push({track, error: error.message})
 		}
+
+		// Show "more" indicator for dry run
+		if (tracks.length > 3) {
+			console.log(`  [...${tracks.length - 3} more]`)
+		}
+
+		return {successes, failures}
 	}
+
+	// Parallel processing for actual downloads
+	const limit = pLimit(clampedConcurrency)
+	let completed = 0
+
+	const downloadPromises = tracks.map((track, index) =>
+		limit(async () => {
+			const progress = `[${index + 1}/${tracks.length}]`
+
+			try {
+				await downloadTrack(track, folderPath, {verbose})
+
+				if (writeMetadata) {
+					await writeTrackMetadata(track, {verbose})
+				}
+
+				await writeTrackMetadataFile(track, {verbose})
+
+				await setFileTimestamps(track.filepath, track, {verbose})
+
+				const txtFilepath = track.filepath.replace(/\.[^.]+$/, '.txt')
+				await setFileTimestamps(txtFilepath, track, {verbose})
+
+				completed++
+				console.log(progress, 'Downloaded:', track.filepath)
+				successes.push(track)
+			} catch (error) {
+				completed++
+				console.error(progress, 'Failed:', track.title)
+				verbose && console.error(error.message)
+				failures.push({track, error: error.message})
+			}
+		})
+	)
+
+	await Promise.all(downloadPromises)
 
 	return {successes, failures}
 }
@@ -90,7 +118,7 @@ export async function downloadBatch(tracks, folderPath, options = {}) {
  * Orchestrates: prepare → filter → download → report
  */
 export async function downloadChannel(tracks, folderPath, options = {}) {
-	const {force = false, dryRun = false, debug = false} = options
+	const {force = false, dryRun = false, verbose = false, concurrency = 3} = options
 
 	// Ensure folder exists
 	if (!dryRun) {
@@ -105,17 +133,24 @@ export async function downloadChannel(tracks, folderPath, options = {}) {
 	const {unavailable, existing, toDownload} = filterTracks(prepared, {force})
 
 	// Report what we found
-	console.log('Total tracks:', tracks.length)
-	console.log('  Unavailable:', unavailable.length)
-	console.log('  Already exists:', existing.length)
-	console.log('  To download:', toDownload.length)
-	console.log()
+	if (dryRun) {
+		// Concise output for dry run
+		console.log(`Would download ${toDownload.length} tracks:`)
+	} else {
+		console.log('Total tracks:', tracks.length)
+		console.log('  Unavailable:', unavailable.length)
+		console.log('  Already exists:', existing.length)
+		console.log('  To download:', toDownload.length)
+		console.log('  Concurrency:', Math.max(1, Math.min(10, concurrency)))
+		console.log()
+	}
 
 	// Pipeline: Download
 	const {successes, failures} = await downloadBatch(toDownload, folderPath, {
 		dryRun,
-		debug,
-		writeMetadata: options.writeMetadata !== false // default true
+		verbose,
+		writeMetadata: options.writeMetadata !== false, // default true
+		concurrency
 	})
 
 	// Pipeline: Report
@@ -137,7 +172,7 @@ export async function downloadChannel(tracks, folderPath, options = {}) {
  * Download a single track using yt-dlp
  * Spawns yt-dlp process and handles output/errors
  */
-export async function downloadTrack(track, folderPath, {debug = false} = {}) {
+export async function downloadTrack(track, folderPath, {verbose = false} = {}) {
 	const filename = toFilename(track)
 	const extension = toExtension(track)
 
@@ -151,23 +186,23 @@ export async function downloadTrack(track, folderPath, {debug = false} = {}) {
 		track.url
 	]
 
-	if (!debug) {
+	if (!verbose) {
 		args.push('--quiet')
 	}
 
-	return spawnYtDlp(args, {debug})
+	return spawnYtDlp(args, {verbose})
 }
 
 /**
  * Spawn yt-dlp process
  * Returns a promise that resolves/rejects based on exit code
  */
-function spawnYtDlp(args, {debug = false} = {}) {
+function spawnYtDlp(args, {verbose = false} = {}) {
 	return new Promise((resolve, reject) => {
 		const process = spawn('yt-dlp', args)
 		const errors = []
 
-		if (debug) {
+		if (verbose) {
 			process.stdout.on('data', (data) => {
 				console.log('[yt-dlp]', data.toString())
 			})
@@ -199,7 +234,7 @@ function spawnYtDlp(args, {debug = false} = {}) {
  * Write metadata to downloaded track file
  * Extracts artist/title and embeds track description
  */
-export async function writeTrackMetadata(track, {debug = false} = {}) {
+export async function writeTrackMetadata(track, {verbose = false} = {}) {
 	if (!track.filepath || !existsSync(track.filepath)) {
 		throw new Error(`File not found: ${track.filepath}`)
 	}
@@ -208,7 +243,7 @@ export async function writeTrackMetadata(track, {debug = false} = {}) {
 	const artistTitle = getArtistTitle(track.title)
 	const [artist, title] = artistTitle || [null, null]
 
-	if (!artistTitle && debug) {
+	if (!artistTitle && verbose) {
 		console.log('Could not parse artist/title from:', track.title)
 	}
 
@@ -239,9 +274,9 @@ export async function writeTrackMetadata(track, {debug = false} = {}) {
 
 /**
  * Write track metadata as a .txt file
- * Creates a human-readable text file with track information
+ * Uses the same text format as `r4 track list --format text`
  */
-export async function writeTrackMetadataFile(track, {debug = false} = {}) {
+export async function writeTrackMetadataFile(track, {verbose = false} = {}) {
 	if (!track.filepath) {
 		throw new Error('Track filepath required')
 	}
@@ -249,43 +284,12 @@ export async function writeTrackMetadataFile(track, {debug = false} = {}) {
 	// Create .txt filepath (same name, different extension)
 	const txtFilepath = track.filepath.replace(/\.[^.]+$/, '.txt')
 
-	// Build description section
-	let descriptionSection = ''
-	if (track.description) {
-		descriptionSection = `\nDescription:\n${track.description}`
-	}
-
-	// Build discogs section
-	let discogsSection = ''
-	if (track.discogs_url) {
-		discogsSection = `\nDiscogs: ${track.discogs_url}`
-	}
-
-	// Build tags section
-	let tagsSection = ''
-	if (track.tags && track.tags.length > 0) {
-		tagsSection = `\nTags: ${track.tags.map((t) => `#${t}`).join(' ')}`
-	}
-
-	// Format timestamps
-	let timestampSection = ''
-	if (track.created_at) {
-		const created = new Date(track.created_at).toLocaleString()
-		timestampSection += `\nAdded: ${created}`
-	}
-	if (track.updated_at) {
-		const updated = new Date(track.updated_at).toLocaleString()
-		timestampSection += `\nUpdated: ${updated}`
-	}
-
-	// Build complete content
-	const content = `Title: ${track.title}
-URL: ${track.url}${descriptionSection}${discogsSection}${tagsSection}${timestampSection}
-`
+	// Use the same formatter as track list command
+	const content = formatTrackText(track)
 
 	await writeFile(txtFilepath, content, 'utf-8')
 
-	if (debug) {
+	if (verbose) {
 		console.log('Wrote metadata file:', txtFilepath)
 	}
 
@@ -296,7 +300,7 @@ URL: ${track.url}${descriptionSection}${discogsSection}${tagsSection}${timestamp
  * Set file timestamps to match track dates
  * Sets mtime to updated_at and atime to created_at
  */
-export async function setFileTimestamps(filepath, track, {debug = false} = {}) {
+export async function setFileTimestamps(filepath, track, {verbose = false} = {}) {
 	if (!existsSync(filepath)) {
 		throw new Error(`File not found: ${filepath}`)
 	}
@@ -307,7 +311,7 @@ export async function setFileTimestamps(filepath, track, {debug = false} = {}) {
 
 	await utimes(filepath, atime, mtime)
 
-	if (debug) {
+	if (verbose) {
 		console.log('Set timestamps:', filepath)
 	}
 }
@@ -318,36 +322,25 @@ export async function setFileTimestamps(filepath, track, {debug = false} = {}) {
 
 /**
  * Write channel ABOUT.txt file
- * Creates a human-readable channel information file
+ * Uses the same text format as `r4 channel view --format text`
  */
 export async function writeChannelAbout(
 	channel,
 	tracks,
 	folderPath,
-	{debug = false} = {}
+	{verbose = false} = {}
 ) {
 	const filepath = `${folderPath}/ABOUT.txt`
 
-	const titleLine = channel.name || 'Untitled Channel'
-	const underline = '='.repeat(titleLine.length)
+	// Use the same formatter as channel view command
+	let content = formatChannelText(channel)
 
-	const description = channel.description || 'No description available.'
-
-	const createdDate = channel.created_at
-		? new Date(channel.created_at).toLocaleDateString()
-		: 'Unknown'
-
-	const websiteSection = channel.url ? `  Website: ${channel.url}\n` : ''
-
-	const content = `${titleLine}
-${underline}
-
-${description}
+	// Add download-specific information
+	content += `
 
 Stats:
   Tracks: ${tracks.length}
-  Created: ${createdDate}
-${websiteSection}
+
 Quick Access:
   image.url     # Channel image URL
   tracks.m3u    # Playlist for streaming
@@ -356,7 +349,7 @@ Quick Access:
 
 	await writeFile(filepath, content, 'utf-8')
 
-	if (debug) {
+	if (verbose) {
 		console.log('Wrote ABOUT.txt:', filepath)
 	}
 
@@ -370,7 +363,7 @@ Quick Access:
 export async function writeChannelImageUrl(
 	channel,
 	folderPath,
-	{debug = false} = {}
+	{verbose = false} = {}
 ) {
 	const filepath = `${folderPath}/image.url`
 
@@ -388,7 +381,7 @@ export async function writeChannelImageUrl(
 
 	await writeFile(filepath, content, 'utf-8')
 
-	if (debug) {
+	if (verbose) {
 		console.log('Wrote image.url:', filepath)
 	}
 
@@ -402,7 +395,7 @@ export async function writeChannelImageUrl(
 export async function writeTracksPlaylist(
 	tracks,
 	folderPath,
-	{debug = false} = {}
+	{verbose = false} = {}
 ) {
 	const filepath = `${folderPath}/tracks.m3u`
 
@@ -414,7 +407,7 @@ export async function writeTracksPlaylist(
 
 	await writeFile(filepath, content, 'utf-8')
 
-	if (debug) {
+	if (verbose) {
 		console.log('Wrote tracks.m3u:', filepath)
 	}
 

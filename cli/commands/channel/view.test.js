@@ -104,6 +104,7 @@ describe('channel view command - format options', () => {
 		})
 
 		expect(result.format).toBe('text')
-		expect(result.data.slug).toBe('ko002')
+		expect(typeof result.data).toBe('string')
+		expect(result.data).toContain('ko002') // Formatted text should contain the slug
 	})
 })

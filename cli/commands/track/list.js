@@ -1,6 +1,14 @@
 import {listTracks} from '../../lib/data.js'
 import {formatOption} from '../../lib/common-options.js'
 
+/**
+ * Format a single track as text (title + URL)
+ * Used by track list and download commands
+ */
+export function formatTrackText(track) {
+	return `  ${track.title}\n    ${track.url}`
+}
+
 function formatTrackSummary(tracks, limit) {
 	const totalCount = tracks.length
 	const displayLimit = limit || 10
@@ -15,8 +23,7 @@ function formatTrackSummary(tracks, limit) {
 		lines.push(`Showing ${showing} track${showing !== 1 ? 's' : ''}:`)
 
 		displayTracks.forEach((track) => {
-			lines.push(`  ${track.title}`)
-			lines.push(`    ${track.url}`)
+			lines.push(formatTrackText(track))
 		})
 
 		if (totalCount > displayLimit) {

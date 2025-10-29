@@ -1,3 +1,4 @@
+import {resolve} from 'node:path'
 import {getChannel, listTracks} from '../lib/data.js'
 import {
 	downloadChannel,
@@ -31,45 +32,56 @@ export default {
 			description: 'Re-download existing files',
 			default: false
 		},
-		dryRun: {
+		'dry-run': {
 			type: 'boolean',
 			description: 'Show what would be downloaded without downloading',
 			default: false
 		},
-		debug: {
+		verbose: {
 			type: 'boolean',
-			description: 'Show detailed debug output',
+			description: 'Show detailed output',
 			default: false
 		},
-		noMetadata: {
+		'no-metadata': {
 			type: 'boolean',
 			description: 'Skip writing metadata to files',
 			default: false
+		},
+		concurrency: {
+			type: 'number',
+			description: 'Number of concurrent downloads (1-10, default: 3)',
+			default: 3
 		}
 	},
 
 	handler: async (input) => {
 		const {slug} = input
-		const folderPath = input.output || `./downloads/${slug}`
+		const folderPath = resolve(input.output || `./${slug}`)
+		const dryRun = input['dry-run']
+		const verbose = input.verbose
+		const noMetadata = input['no-metadata']
 
 		// Get channel and tracks
 		const channel = await getChannel(slug)
 		const tracks = await listTracks({channelSlugs: [slug], limit: input.limit})
 
-		console.log(`Channel: ${channel.name} (@${channel.slug})`)
+		console.log(`${channel.name} (@${channel.slug})`)
+		if (dryRun) {
+			console.log(folderPath)
+		}
 		console.log()
 
 		// Write channel context files (unless dry run)
-		if (!input.dryRun) {
+		if (!dryRun) {
 			const {mkdir} = await import('node:fs/promises')
 			await mkdir(folderPath, {recursive: true})
 
 			console.log(`${folderPath}/`)
-			await writeChannelAbout(channel, tracks, folderPath, {debug: input.debug})
+			await writeChannelAbout(channel, tracks, folderPath, {verbose})
 			console.log('├── ABOUT.txt')
-			await writeChannelImageUrl(channel, folderPath, {debug: input.debug})
+			await writeChannelImageUrl(channel, folderPath, {verbose})
 			console.log('├── image.url')
-			await writeTracksPlaylist(tracks, folderPath, {debug: input.debug})
+			await writeTracksPlaylist(tracks, folderPath, {verbose})
 			console.log(`└── tracks.m3u (try: mpv ${folderPath}/tracks.m3u)`)
 			console.log()
 		}
@@ -77,25 +89,29 @@ export default {
 		// Download
 		const result = await downloadChannel(tracks, folderPath, {
 			force: input.force,
-			dryRun: input.dryRun,
-			debug: input.debug,
-			writeMetadata: !input.noMetadata
+			dryRun,
+			verbose,
+			writeMetadata: !noMetadata,
+			concurrency: input.concurrency
 		})
 
-		console.log()
-		console.log('Summary:')
-		console.log(`  Total: ${result.total}`)
-		console.log(`  Downloaded: ${result.downloaded}`)
-		console.log(`  Already exists: ${result.existing}`)
-		console.log(`  Unavailable: ${result.unavailable}`)
-		console.log(`  Failed: ${result.failed}`)
-
-		if (result.failures.length > 0) {
+		// Only show summary and failures for actual downloads, not dry runs
+		if (!dryRun) {
 			console.log()
-			console.log('Failures:')
-			for (const failure of result.failures) {
-				console.log(`  ${failure.track.title}`)
-				console.log(`    ${failure.error}`)
+			console.log('Summary:')
+			console.log(`  Total: ${result.total}`)
+			console.log(`  Downloaded: ${result.downloaded}`)
+			console.log(`  Already exists: ${result.existing}`)
+			console.log(`  Unavailable: ${result.unavailable}`)
+			console.log(`  Failed: ${result.failed}`)
+
+			if (result.failures.length > 0) {
+				console.log()
+				console.log('Failures:')
+				for (const failure of result.failures) {
+					console.log(`  ${failure.track.title}`)
+					console.log(`    ${failure.error}`)
+				}
 			}
 		}
 
@@ -111,6 +127,7 @@ export default {
 		'r4 download ko002 --output ./my-music',
 		'r4 download ko002 --dry-run',
 		'r4 download ko002 --force',
-		'r4 download ko002 --no-metadata'
+		'r4 download ko002 --no-metadata',
+		'r4 download ko002 --concurrency 5'
 	]
 }
