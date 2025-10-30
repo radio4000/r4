@@ -3,14 +3,14 @@ import {dirname, resolve} from 'node:path'
 import {fileURLToPath} from 'node:url'
 import {sdk} from '@radio4000/sdk'
 import fuzzysort from 'fuzzysort'
-import {getValidSession} from './auth.js'
+import {loadSession} from './auth.js'
 import {channelSchema, trackSchema} from './schema.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
 // V1 data paths
-const V1_CHANNELS_PATH = resolve(__dirname, '../data/channels_v1.json')
-const V1_TRACKS_PATH = resolve(__dirname, '../data/tracks_v1.json')
+const V1_CHANNELS_PATH = resolve(__dirname, '../../data/channels_v1.json')
+const V1_TRACKS_PATH = resolve(__dirname, '../../data/tracks_v1.json')
 
 // Cache for v1 data
 let v1ChannelsCache = null
@@ -71,7 +71,7 @@ export async function loadV1Tracks() {
 // ===== AUTH HELPERS =====
 
 export async function requireAuth() {
-	const session = await getValidSession()
+	const session = await loadSession()
 
 	if (!session) {
 		throw new Error('Authentication required. Run: r4 auth login')

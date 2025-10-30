@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url'
 import {trackSchema} from './schema.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const V1_TRACKS_PATH = resolve(__dirname, '../data/tracks_v1.json')
+const V1_TRACKS_PATH = resolve(__dirname, '../../data/tracks_v1.json')
 
 describe('trackSchema validation against v1 data', () => {
 	let tracks

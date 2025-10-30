@@ -6,7 +6,8 @@
 	"main": "cli/main.js",
 	"scripts": {
 		"check": "biome check --write",
-		"test": "bun test --only-failures"
+		"test": "bun test --only-failures",
+		"postinstall": "tar xzf data/data_v1.tar.gz -C data"
 	},
 	"repository": {
 		"type": "git",
