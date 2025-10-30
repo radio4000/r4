@@ -122,10 +122,7 @@ export default {
 		}
 
 		// Don't return data - all output already printed above
-		return {
-			data: '',
-			format: 'text'
-		}
+		return ''
 	},
 
 	examples: [

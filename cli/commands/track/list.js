@@ -1,5 +1,6 @@
 import {formatOption} from '../../lib/common-options.js'
 import {listTracks} from '../../lib/data.js'
+import {formatJSON, formatSQL} from '../../lib/formatters.js'
 
 /**
  * Format a single track as text (title + URL)
@@ -68,20 +69,14 @@ export default {
 			limit: input.limit
 		})
 
-		// For text format, return formatted summary
+		// Format based on requested format
 		if (format === 'text') {
-			return {
-				data: formatTrackSummary(tracks, input.limit),
-				format: 'text'
-			}
+			return formatTrackSummary(tracks, input.limit)
 		}
-
-		// For json/sql, return raw data
-		return {
-			data: tracks,
-			format,
-			formatOptions: format === 'sql' ? {table: 'tracks'} : undefined
+		if (format === 'sql') {
+			return formatSQL(tracks, {table: 'tracks'})
 		}
+		return formatJSON(tracks)
 	},
 
 	examples: [

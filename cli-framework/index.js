@@ -88,13 +88,15 @@ async function routeCommand(commandsDir, commandPath) {
 		}
 
 		// Check if there's a directory to go deeper
-		if (existsSync(nextDir)) {
+		try {
 			const stats = await stat(nextDir)
 			if (stats.isDirectory()) {
 				currentDir = nextDir
 				consumedPath.push(segment)
 				continue
 			}
+		} catch {
+			// Path doesn't exist or isn't accessible
 		}
 
 		// No file or directory found - command doesn't exist
@@ -129,23 +131,13 @@ export async function executeCommand({commandsDir, argv, context = {}}) {
 	// Resolve commands directory to absolute path
 	const resolvedCommandsDir = resolve(commandsDir)
 
-	// Parse command path from argv
-	// argv starts with command segments, then flags and args
-	// We need to figure out where command path ends and command args begin
-	// Strategy: try to route progressively deeper until we find a command file
+	// Parse command path from argv (non-flag arguments at the beginning)
 	const commandPath = []
-	let remainingArgv = [...argv]
-
-	// Extract command path (non-flag arguments from the beginning)
-	for (let i = 0; i < argv.length; i++) {
-		const arg = argv[i]
-		if (arg.startsWith('-')) {
-			// Hit a flag, rest is command arguments
-			break
-		}
+	for (const arg of argv) {
+		if (arg.startsWith('-')) break
 		commandPath.push(arg)
-		remainingArgv = argv.slice(i + 1)
 	}
+	const remainingArgv = argv.slice(commandPath.length)
 
 	// Route to command file
 	const {commandFile, remainingArgs} = await routeCommand(

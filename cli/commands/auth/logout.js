@@ -1,5 +1,6 @@
 import {sdk} from '@radio4000/sdk'
 import {clearSession, loadSession} from '../../lib/auth.js'
+import {formatJSON} from '../../lib/formatters.js'
 
 export default {
 	description: 'Sign out from Radio4000',
@@ -9,10 +10,7 @@ export default {
 
 		if (!session) {
 			console.error('Not logged in')
-			return {
-				data: {success: false, message: 'Not logged in'},
-				format: 'json'
-			}
+			return formatJSON({success: false, message: 'Not logged in'})
 		}
 
 		// Sign out from Supabase (invalidate session on server)
@@ -32,10 +30,7 @@ export default {
 		console.error('Signed out successfully')
 		console.error('Session cleared from ~/.config/radio4000/config.json')
 
-		return {
-			data: {success: true, message: 'Signed out successfully'},
-			format: 'json'
-		}
+		return formatJSON({success: true, message: 'Signed out successfully'})
 	},
 
 	examples: ['r4 auth logout']

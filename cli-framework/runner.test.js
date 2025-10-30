@@ -429,7 +429,7 @@ describe('runCommand - Context', () => {
 			description: 'Test',
 			args: [],
 			options: {},
-			handler: async (_input, {context}) => context
+			handler: async (_input, context) => context
 		}
 
 		const context = {auth: {token: 'secret'}, config: {verbose: true}}
@@ -498,7 +498,7 @@ describe('runCommand - Integration', () => {
 				json: z.boolean(),
 				limit: z.number()
 			}),
-			handler: async (input, {context}) => ({
+			handler: async (input, context) => ({
 				input,
 				context
 			})

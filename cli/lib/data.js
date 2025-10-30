@@ -18,16 +18,6 @@ let v1TracksCache = null
 
 // ===== HELPERS =====
 
-const parse = (schema, source) => (item) => schema.parse({...item, source})
-
-const tryParse = (schema, source) => (item) => {
-	try {
-		return parse(schema, source)(item)
-	} catch {
-		return null
-	}
-}
-
 const v2WithV1Fallback = async (v2Fn, v1Data, combiner) => {
 	try {
 		const v2Result = await v2Fn()
@@ -52,14 +42,12 @@ const rejectV1Mutation = (type, id) => {
 	)
 }
 
-const limit = (items, n) => (n ? items.slice(0, n) : items)
-
 // ===== V1 DATA LOADERS =====
 
 export async function loadV1Channels() {
 	if (v1ChannelsCache) return v1ChannelsCache
 	const content = await readFile(V1_CHANNELS_PATH, 'utf-8')
-	v1ChannelsCache = JSON.parse(content).map(parse(channelSchema, 'v1'))
+	v1ChannelsCache = JSON.parse(content).map((item) => channelSchema.parse({...item, source: 'v1'}))
 	return v1ChannelsCache
 }
 
@@ -67,17 +55,18 @@ export async function loadV1Tracks() {
 	if (v1TracksCache) return v1TracksCache
 	const content = await readFile(V1_TRACKS_PATH, 'utf-8')
 	v1TracksCache = JSON.parse(content)
-		.map(tryParse(trackSchema, 'v1'))
+		.map((item) => {
+			try {
+				return trackSchema.parse({...item, source: 'v1'})
+			} catch {
+				return null
+			}
+		})
 		.filter(Boolean)
 	return v1TracksCache
 }
 
 // ===== AUTH HELPERS =====
-
-export async function getAuthToken() {
-	const session = await getValidSession()
-	return session?.access_token || null
-}
 
 export async function requireAuth() {
 	const session = await getValidSession()
@@ -104,15 +93,13 @@ export async function listChannels(options = {}) {
 		async () => {
 			const {data, error} = await sdk.channels.readChannels()
 			if (error) throw new Error(error)
-			return data.map(parse(channelSchema, 'v2'))
+			return data.map((item) => channelSchema.parse({...item, source: 'v2'}))
 		},
-		limit(v1Channels, options.limit),
+		options.limit ? v1Channels.slice(0, options.limit) : v1Channels,
 		(v2Channels, v1) => {
 			const v2Slugs = new Set(v2Channels.map((ch) => ch.slug))
-			return limit(
-				[...v2Channels, ...v1.filter((ch) => !v2Slugs.has(ch.slug))],
-				options.limit
-			)
+			const combined = [...v2Channels, ...v1.filter((ch) => !v2Slugs.has(ch.slug))]
+			return options.limit ? combined.slice(0, options.limit) : combined
 		}
 	)
 }
@@ -121,7 +108,7 @@ export async function getChannel(slug) {
 	try {
 		const {data, error} = await sdk.channels.readChannel(slug)
 		if (error) throw new Error(error)
-		return parse(channelSchema, 'v2')(data)
+		return channelSchema.parse({...data, source: 'v2'})
 	} catch {
 		const channel = (await loadV1Channels()).find((ch) => ch.slug === slug)
 		if (!channel) throw new Error(`Channel not found: ${slug}`)
@@ -133,7 +120,7 @@ export async function createChannel(data) {
 	await requireAuth()
 	const {data: channel, error} = await sdk.channels.createChannel(data)
 	if (error) throw new Error(error)
-	return parse(channelSchema, 'v2')(channel)
+	return channelSchema.parse({...channel, source: 'v2'})
 }
 
 export async function updateChannel(slug, updates) {
@@ -143,7 +130,7 @@ export async function updateChannel(slug, updates) {
 
 	const {data, error} = await sdk.channels.updateChannel(channel.id, updates)
 	if (error) throw new Error(error)
-	return parse(channelSchema, 'v2')(data)
+	return channelSchema.parse({...data, source: 'v2'})
 }
 
 export async function deleteChannel(slug) {
@@ -157,23 +144,6 @@ export async function deleteChannel(slug) {
 }
 
 // ===== TRACK OPERATIONS =====
-
-const fetchChannelTracks = async (slug) => {
-	const {data, error} = await sdk.channels.readChannelTracks(slug)
-	if (error) throw new Error(error)
-	return data
-}
-
-const logInvalidTracks = (tracks) => {
-	if (tracks.length === 0) return
-	console.error(`Warning: Skipped ${tracks.length} invalid track(s):`)
-	tracks.forEach((t) => {
-		console.error(`  "${t.title}"`)
-		console.error(`    URL: ${t.url}`)
-		console.error(`    Reason: ${t.error}`)
-		console.error(`    Fix: r4 track edit ${t.id}`)
-	})
-}
 
 export async function listTracks(options = {}) {
 	const {channelSlugs, limit: maxItems} = options
@@ -200,14 +170,20 @@ export async function listTracks(options = {}) {
 		validateChannels(v2Slugs)
 
 		const rawTracks = (
-			await Promise.all(channelSlugs.map(fetchChannelTracks))
+			await Promise.all(
+				channelSlugs.map(async (slug) => {
+					const {data, error} = await sdk.channels.readChannelTracks(slug)
+					if (error) throw new Error(error)
+					return data
+				})
+			)
 		).flat()
 		const invalidTracks = []
 
 		const v2Tracks = rawTracks
 			.map((tr) => {
 				try {
-					return parse(trackSchema, 'v2')(tr)
+					return trackSchema.parse({...tr, source: 'v2'})
 				} catch (error) {
 					invalidTracks.push({
 						id: tr.id,
@@ -220,19 +196,23 @@ export async function listTracks(options = {}) {
 			})
 			.filter(Boolean)
 
-		logInvalidTracks(invalidTracks)
+		if (invalidTracks.length > 0) {
+			console.error(`Warning: Skipped ${invalidTracks.length} invalid track(s):`)
+			invalidTracks.forEach((t) => {
+				console.error(`  "${t.title}"`)
+				console.error(`    URL: ${t.url}`)
+				console.error(`    Reason: ${t.error}`)
+				console.error(`    Fix: r4 track edit ${t.id}`)
+			})
+		}
 
-		return limit(
-			[...v2Tracks, ...v1Tracks].filter((tr) => channelSlugs.includes(tr.slug)),
-			maxItems
-		)
+		const combined = [...v2Tracks, ...v1Tracks].filter((tr) => channelSlugs.includes(tr.slug))
+		return maxItems ? combined.slice(0, maxItems) : combined
 	} catch (error) {
 		if (error.code === 'CHANNEL_NOT_FOUND') throw error
 		validateChannels()
-		return limit(
-			v1Tracks.filter((tr) => channelSlugs.includes(tr.slug)),
-			maxItems
-		)
+		const filtered = v1Tracks.filter((tr) => channelSlugs.includes(tr.slug))
+		return maxItems ? filtered.slice(0, maxItems) : filtered
 	}
 }
 
@@ -240,7 +220,7 @@ export async function getTrack(id) {
 	try {
 		const {data, error} = await sdk.tracks.readTrack(id)
 		if (error) throw new Error(error)
-		return parse(trackSchema, 'v2')(data)
+		return trackSchema.parse({...data, source: 'v2'})
 	} catch {
 		const track = (await loadV1Tracks()).find((tr) => tr.id === id)
 		if (!track) throw new Error(`Track not found: ${id}`)
@@ -257,7 +237,7 @@ export async function createTrack(data) {
 
 	const {data: track, error} = await sdk.tracks.createTrack(channelId, data)
 	if (error) throw new Error(error)
-	return parse(trackSchema, 'v2')(track)
+	return trackSchema.parse({...track, source: 'v2'})
 }
 
 export async function updateTrack(id, updates) {
@@ -267,7 +247,7 @@ export async function updateTrack(id, updates) {
 
 	const {data, error} = await sdk.tracks.updateTrack(id, updates)
 	if (error) throw new Error(error)
-	return parse(trackSchema, 'v2')(data)
+	return trackSchema.parse({...data, source: 'v2'})
 }
 
 export async function deleteTrack(id) {
@@ -282,16 +262,6 @@ export async function deleteTrack(id) {
 
 // ===== SEARCH OPERATIONS =====
 
-const fuzzySearch = (query, items, keys, options) =>
-	fuzzysort
-		.go(query, items, {
-			keys,
-			threshold: options.threshold || -10000,
-			all: false,
-			limit: options.limit
-		})
-		.map((r) => r.obj)
-
 export async function searchChannels(query, options = {}) {
 	const v1Channels = await loadV1Channels()
 	const keys = ['slug', 'name', 'description']
@@ -303,15 +273,20 @@ export async function searchChannels(query, options = {}) {
 				.select()
 				.textSearch('fts', `'${query}':*`)
 			if (error) throw new Error(error.message)
-			return data.map(parse(channelSchema, 'v2'))
+			return data.map((item) => channelSchema.parse({...item, source: 'v2'}))
 		},
-		fuzzySearch(query, v1Channels, keys, options),
+		fuzzysort
+			.go(query, v1Channels, {
+				keys,
+				threshold: options.threshold || -10000,
+				all: false,
+				limit: options.limit
+			})
+			.map((r) => r.obj),
 		(v2Results, v1Results) => {
 			const v2Slugs = new Set(v2Results.map((ch) => ch.slug))
-			return limit(
-				[...v2Results, ...v1Results.filter((ch) => !v2Slugs.has(ch.slug))],
-				options.limit
-			)
+			const combined = [...v2Results, ...v1Results.filter((ch) => !v2Slugs.has(ch.slug))]
+			return options.limit ? combined.slice(0, options.limit) : combined
 		}
 	)
 }
@@ -327,10 +302,20 @@ export async function searchTracks(query, options = {}) {
 				.select()
 				.textSearch('fts', `'${query}':*`)
 			if (error) throw new Error(error.message)
-			return data.map(parse(trackSchema, 'v2'))
+			return data.map((item) => trackSchema.parse({...item, source: 'v2'}))
 		},
-		fuzzySearch(query, v1Tracks, keys, options),
-		(v2Results, v1Results) => limit([...v2Results, ...v1Results], options.limit)
+		fuzzysort
+			.go(query, v1Tracks, {
+				keys,
+				threshold: options.threshold || -10000,
+				all: false,
+				limit: options.limit
+			})
+			.map((r) => r.obj),
+		(v2Results, v1Results) => {
+			const combined = [...v2Results, ...v1Results]
+			return options.limit ? combined.slice(0, options.limit) : combined
+		}
 	)
 }
 

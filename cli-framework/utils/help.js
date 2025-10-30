@@ -3,57 +3,8 @@
  */
 import {ErrorTypes} from '../types.js'
 
-/**
- * Format argument for usage line
- * @param {Object} arg - Argument definition
- * @returns {string} Formatted argument
- */
-function formatArgUsage(arg) {
-	let formatted = arg.name
 
-	if (arg.multiple) {
-		formatted = `${formatted}...`
-	}
 
-	if (arg.required) {
-		return `<${formatted}>`
-	}
-	return `[${formatted}]`
-}
-
-/**
- * Format option flag
- * @param {string} name - Option name
- * @param {Object} def - Option definition
- * @returns {string} Formatted flag
- */
-function formatOptionFlag(name, def) {
-	let flag = `--${name}`
-
-	if (def.short) {
-		flag = `-${def.short}, ${flag}`
-	}
-
-	if (def.type === 'string') {
-		flag = `${flag} <value>`
-	}
-
-	return flag
-}
-
-/**
- * Pad string to specified width
- * @param {string} str - String to pad
- * @param {number} width - Target width
- * @returns {string} Padded string
- */
-function pad(str, width) {
-	const remaining = width - str.length
-	if (remaining <= 0) {
-		return str
-	}
-	return str + ' '.repeat(remaining)
-}
 
 /**
  * Generate help text for a command
@@ -69,7 +20,11 @@ export function generateCommandHelp(command, commandPath) {
 	const usageParts = [commandPath]
 
 	if (command.args.length > 0) {
-		usageParts.push(...command.args.map(formatArgUsage))
+		usageParts.push(...command.args.map(arg => {
+			let formatted = arg.name
+			if (arg.multiple) formatted = `${formatted}...`
+			return arg.required ? `<${formatted}>` : `[${formatted}]`
+		}))
 	}
 
 	if (Object.keys(command.options).length > 0) {
@@ -91,12 +46,18 @@ export function generateCommandHelp(command, commandPath) {
 		lines.push('ARGUMENTS')
 
 		const maxArgWidth = Math.max(
-			...command.args.map((arg) => formatArgUsage(arg).length)
+			...command.args.map((arg) => {
+				let formatted = arg.name
+				if (arg.multiple) formatted = `${formatted}...`
+				return (arg.required ? `<${formatted}>` : `[${formatted}]`).length
+			})
 		)
 
 		for (const arg of command.args) {
-			const usage = formatArgUsage(arg)
-			const padded = pad(usage, maxArgWidth + 4)
+			let formatted = arg.name
+			if (arg.multiple) formatted = `${formatted}...`
+			const usage = arg.required ? `<${formatted}>` : `[${formatted}]`
+			const padded = usage.padEnd(maxArgWidth + 4)
 			const reqText = arg.required ? '(required)' : '(optional)'
 			lines.push(`  ${padded}${arg.description} ${reqText}`)
 		}
@@ -107,16 +68,25 @@ export function generateCommandHelp(command, commandPath) {
 	if (Object.keys(command.options).length > 0) {
 		lines.push('OPTIONS')
 
-		const flags = Object.entries(command.options).map(([name, def]) => ({
-			flag: formatOptionFlag(name, def),
-			description: def.description,
-			default: def.default
-		}))
+		const flags = Object.entries(command.options).map(([name, def]) => {
+			let flag = `--${name}`
+			if (def.short) {
+				flag = `-${def.short}, ${flag}`
+			}
+			if (def.type === 'string') {
+				flag = `${flag} <value>`
+			}
+			return {
+				flag,
+				description: def.description,
+				default: def.default
+			}
+		})
 
 		const maxFlagWidth = Math.max(...flags.map((f) => f.flag.length))
 
 		for (const {flag, description, default: defaultValue} of flags) {
-			const padded = pad(flag, maxFlagWidth + 4)
+			const padded = flag.padEnd(maxFlagWidth + 4)
 			let desc = description
 			if (defaultValue !== undefined) {
 				desc = `${desc} (default: ${defaultValue})`
@@ -164,7 +134,7 @@ export function generateGroupHelp(commands, commandPath) {
 		const maxNameWidth = Math.max(...allCommands.map((cmd) => cmd.name.length))
 
 		for (const cmd of allCommands) {
-			const padded = pad(cmd.name, maxNameWidth + 4)
+			const padded = cmd.name.padEnd(maxNameWidth + 4)
 			lines.push(`  ${padded}${cmd.description}`)
 		}
 		lines.push('')
@@ -211,7 +181,7 @@ export function generateMainHelp(commands, programName, options = {}) {
 		const maxNameWidth = Math.max(...commands.map((cmd) => cmd.name.length))
 
 		for (const cmd of commands) {
-			const padded = pad(cmd.name, maxNameWidth + 4)
+			const padded = cmd.name.padEnd(maxNameWidth + 4)
 			lines.push(`  ${padded}${cmd.description}`)
 		}
 		lines.push('')

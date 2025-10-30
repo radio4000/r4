@@ -3,7 +3,6 @@ import {dirname, resolve} from 'node:path'
 import {fileURLToPath} from 'node:url'
 import {executeCommand} from '../cli-framework/index.js'
 import {formatCLIError} from '../cli-framework/utils/help.js'
-import {formatOutput} from './lib/formatters.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -19,22 +18,9 @@ async function main() {
 			}
 		})
 
-		// Commands can return either a string or a structured result with format
+		// Commands return formatted strings, framework just prints
 		if (result) {
-			if (typeof result === 'string') {
-				console.log(result)
-			} else if (result && typeof result === 'object' && 'format' in result) {
-				// Structured result with format - use formatter
-				const output = formatOutput(
-					result.data,
-					result.format,
-					result.formatOptions
-				)
-				console.log(output)
-			} else {
-				// Plain object/value - output as-is
-				console.log(result)
-			}
+			console.log(result)
 		}
 		process.exit(0)
 	} catch (error) {

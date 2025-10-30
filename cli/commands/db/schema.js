@@ -26,10 +26,7 @@ export default {
 		}
 	},
 
-	handler: async (input) => ({
-		data: selectSchemas(input).join('\n\n'),
-		format: 'text'
-	}),
+	handler: async (input) => selectSchemas(input).join('\n\n'),
 
 	examples: [
 		'r4 db schema',

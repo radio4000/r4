@@ -1,6 +1,5 @@
 import {afterEach, beforeEach, describe, expect, test} from 'bun:test'
 import {
-	getAuthToken,
 	getChannel,
 	listChannels,
 	listTracks,
@@ -48,13 +47,6 @@ describe('loadV1Tracks', () => {
 })
 
 describe('auth', () => {
-	test('getAuthToken returns session token if available', async () => {
-		// Note: This test may return null if no saved session exists
-		// or return a token string if a session is saved in ~/.config/radio4000/config.json
-		const token = await getAuthToken()
-		expect(token === null || typeof token === 'string').toBe(true)
-	})
-
 	test('requireAuth throws when no saved session', async () => {
 		// Note: This test may pass if you have a valid saved session
 		// To properly test in isolation, would need to mock the auth.js module
