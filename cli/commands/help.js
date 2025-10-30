@@ -14,9 +14,6 @@ export default {
 		// Group commands by category (directory structure)
 		const groups = {}
 		for (const cmd of allCommands) {
-			// Skip hidden commands
-			if (cmd.hidden) continue
-
 			// Determine group from path (e.g., "channel/list" → "channel")
 			const parts = cmd.name.split('/')
 			if (parts.length > 1) {

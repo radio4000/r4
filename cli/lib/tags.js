@@ -28,6 +28,20 @@ export function extractTags(text) {
 }
 
 /**
+ * Get normalized tags from a track object
+ * Uses parsed tags array if available, otherwise extracts from description/body
+ * @param {object} track - Track object with tags, description, or body
+ * @returns {string[]} Array of normalized lowercase tags
+ */
+function getTrackTags(track) {
+	if (track.tags && Array.isArray(track.tags)) {
+		return track.tags.map((t) => t.toLowerCase())
+	}
+	const text = track.description || track.body || ''
+	return extractTags(text)
+}
+
+/**
  * Get unique tags from a list of tracks with their occurrence count
  * @param {Array<{tags?: string[], description?: string, body?: string}>} tracks - Array of track objects
  * @returns {{tags: string[], sortedTags: Array<[string, number]>, tagMap: Map<string, number>}}
@@ -40,14 +54,7 @@ export function getUniqueTags(tracks) {
 	const tagCounts = new Map()
 
 	for (const track of tracks) {
-		// Use parsed tags array if available, otherwise extract from text
-		let tags
-		if (track.tags && Array.isArray(track.tags)) {
-			tags = track.tags.map((t) => t.toLowerCase())
-		} else {
-			const text = track.description || track.body || ''
-			tags = extractTags(text)
-		}
+		const tags = getTrackTags(track)
 
 		for (const tag of tags) {
 			tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1)
@@ -86,14 +93,7 @@ export function filterTracksByTags(tracks, filterTags, matchAll = false) {
 	const normalizedFilterTags = filterTags.map((t) => t.toLowerCase())
 
 	return tracks.filter((track) => {
-		// Use parsed tags array if available, otherwise extract from text
-		let trackTags
-		if (track.tags && Array.isArray(track.tags)) {
-			trackTags = track.tags.map((t) => t.toLowerCase())
-		} else {
-			const text = track.description || track.body || ''
-			trackTags = extractTags(text)
-		}
+		const trackTags = getTrackTags(track)
 
 		if (matchAll) {
 			// Track must have all filter tags

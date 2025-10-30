@@ -1,4 +1,7 @@
 /*
+Based on p-limit (https://github.com/sindresorhus/p-limit)
+Customized for r4 CLI concurrency control needs.
+
 How it works:
 `this.#head` is an instance of `Node` which keeps track of its current value and nests another instance of `Node` that keeps the value that comes after it. When a value is provided to `.enqueue()`, the code needs to iterate through `this.#head`, going deeper and deeper to find the last value. However, iterating through every single item is slow. This problem is solved by saving a reference to the last value as `this.#tail` so that it can reference it to add a new value.
 */
@@ -52,9 +55,6 @@ class Queue {
 		}
 
 		return this.#head.value
-
-		// TODO: Node.js 18.
-		// return this.#head?.value;
 	}
 
 	clear() {
@@ -177,13 +177,6 @@ export default function pLimit(concurrency) {
 	})
 
 	return generator
-}
-
-export function limitFunction(function_, options) {
-	const {concurrency} = options
-	const limit = pLimit(concurrency)
-
-	return (...arguments_) => limit(() => function_(...arguments_))
 }
 
 function validateConcurrency(concurrency) {

@@ -1,6 +1,6 @@
 import {createInterface} from 'node:readline/promises'
 import {sdk} from '@radio4000/sdk'
-import {saveSession} from '../../lib/auth.js'
+import * as config from '../../lib/config.js'
 
 export default {
 	description: 'Authenticate with Radio4000 using email OTP',
@@ -73,7 +73,7 @@ export default {
 			}
 
 			// Step 4: Save session
-			await saveSession(verifyData.session)
+			await config.update({auth: {session: verifyData.session}})
 
 			console.error(`Authenticated as ${verifyData.session.user.email}`)
 			console.error('Session saved to ~/.config/radio4000/config.json')

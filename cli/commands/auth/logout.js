@@ -1,11 +1,11 @@
-import {clearSession} from '../../lib/auth.js'
+import * as config from '../../lib/config.js'
 import {formatJSON} from '../../lib/formatters.js'
 
 export default {
 	description: 'Clear local session',
 
 	handler: async () => {
-		await clearSession()
+		await config.update({auth: {session: null}})
 		return formatJSON({cleared: true})
 	},
 

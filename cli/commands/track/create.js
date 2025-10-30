@@ -25,7 +25,6 @@ export default {
 	validate: trackSchema.pick({title: true, url: true}),
 
 	handler: async (input) => {
-		// Why: data.js createTrack expects 'slug' for channel identifier
 		return await createTrack({...input, slug: input.channel})
 	},
 

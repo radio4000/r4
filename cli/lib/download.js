@@ -3,11 +3,10 @@ import {existsSync, readFileSync} from 'node:fs'
 import {appendFile, mkdir, utimes, writeFile} from 'node:fs/promises'
 import ffmetadata from 'ffmetadata'
 import getArtistTitle from 'get-artist-title'
-import {formatChannelText} from '../commands/channel/view.js'
-import {formatTrackText} from '../commands/track/list.js'
 import {toExtension, toFilename} from './filenames.js'
 import {createCloudinaryImageUrl} from './images.js'
 import pLimit from './p-limit-custom.js'
+import {formatChannelText, formatTrackText} from './text-formatters.js'
 
 /**
  * Download pipeline for Radio4000 tracks

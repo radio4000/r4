@@ -2,14 +2,7 @@ import {formatOption} from '../../lib/common-options.js'
 import {listTracks} from '../../lib/data.js'
 import {formatJSON, formatSQL} from '../../lib/formatters.js'
 import {filterTracksByTags} from '../../lib/tags.js'
-
-/**
- * Format a single track as text (title + URL)
- * Used by track list and download commands
- */
-export function formatTrackText(track) {
-	return `${track.title}\n${track.description}\n  ${track.url}`
-}
+import {formatTrackText} from '../../lib/text-formatters.js'
 
 function formatTrackSummary(tracks, limit) {
 	const totalCount = tracks.length
