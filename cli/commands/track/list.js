@@ -8,7 +8,7 @@ import {filterTracksByTags} from '../../lib/tags.js'
  * Used by track list and download commands
  */
 export function formatTrackText(track) {
-	return `  ${track.title}\n    ${track.url}`
+	return `${track.title}\n${track.description}\n  ${track.url}`
 }
 
 function formatTrackSummary(tracks, limit) {
