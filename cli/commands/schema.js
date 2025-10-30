@@ -1,4 +1,4 @@
-import {channelSQL, trackSQL} from '../../lib/schema.js'
+import {channelSQL, trackSQL} from '../lib/schema.js'
 
 const schemas = {
 	channels: channelSQL,
@@ -29,9 +29,9 @@ export default {
 	handler: async (input) => selectSchemas(input).join('\n\n'),
 
 	examples: [
-		'r4 db schema',
-		'r4 db schema --channels',
-		'r4 db schema --tracks',
-		'r4 db schema | sqlite3 my.db'
+		'r4 schema',
+		'r4 schema --channels',
+		'r4 schema --tracks',
+		'r4 schema | sqlite3 my.db'
 	]
 }
