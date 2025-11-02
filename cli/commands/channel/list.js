@@ -5,11 +5,20 @@ import {parse} from '../../utils.js'
 export default {
 	description: 'List all channels (from v2 API or bundled v1 data)',
 
+	options: {
+		limit: {
+			type: 'number',
+			default: 100,
+			description: 'Limit number of results'
+		},
+		format: {
+			type: 'string',
+			description: 'Output format: text, json, sql (auto: tty=text, pipe=json)'
+		}
+	},
+
 	async run(argv) {
-		const {values} = parse(argv, {
-			limit: {type: 'number', default: 100},
-			format: {type: 'string'}
-		})
+		const {values} = parse(argv, this.options)
 
 		const limit = values.limit ?? 100
 		const channels = await listChannels({limit})

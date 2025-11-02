@@ -38,14 +38,35 @@ export default {
 	description:
 		'List tracks for specified channel(s), optionally filtered by tags',
 
+	options: {
+		channel: {
+			type: 'string',
+			multiple: true,
+			description: 'Channel slug(s) to list tracks from (required)'
+		},
+		tag: {
+			type: 'string',
+			multiple: true,
+			description: 'Filter by tag(s)'
+		},
+		'match-all': {
+			type: 'boolean',
+			default: false,
+			description: 'Require all tags instead of any tag'
+		},
+		limit: {
+			type: 'number',
+			description: 'Limit number of results'
+		},
+		format: {
+			type: 'string',
+			description:
+				'Output format: text, json, sql, m3u (auto: tty=text, pipe=json)'
+		}
+	},
+
 	async run(argv) {
-		const {values} = parse(argv, {
-			channel: {type: 'string', multiple: true},
-			tag: {type: 'string', multiple: true},
-			'match-all': {type: 'boolean', default: false},
-			limit: {type: 'number'},
-			format: {type: 'string'}
-		})
+		const {values} = parse(argv, this.options)
 
 		if (!values.channel || values.channel.length === 0) {
 			throw new Error('--channel is required')

@@ -44,3 +44,4 @@ r4
 - Keep code path direct and clear
 - Methods should do meaningful work beyond simple access 
 - When reviewing plan.md remember it is a suggestion of backlog ideas to evaluate, not follow blindly. Tackle them one by one.
+- Use bun run check to help lint and format code
