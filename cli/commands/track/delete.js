@@ -5,10 +5,15 @@ import {parse} from '../../utils.js'
 export default {
 	description: 'Delete one or more tracks',
 
+	options: {
+		sql: {
+			type: 'boolean',
+			description: 'Output result as SQL INSERT statements'
+		}
+	},
+
 	async run(argv) {
-		const {values, positionals} = parse(argv, {
-			sql: {type: 'boolean'}
-		})
+		const {values, positionals} = parse(argv, this.options)
 
 		if (positionals.length === 0) {
 			throw new Error('At least one track ID is required')

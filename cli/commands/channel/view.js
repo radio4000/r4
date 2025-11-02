@@ -5,10 +5,15 @@ import {parse} from '../../utils.js'
 export default {
 	description: 'View detailed information about one or more channels',
 
+	options: {
+		format: {
+			type: 'string',
+			description: 'Output format: json, sql, text (default: json)'
+		}
+	},
+
 	async run(argv) {
-		const {values, positionals} = parse(argv, {
-			format: {type: 'string'}
-		})
+		const {values, positionals} = parse(argv, this.options)
 
 		if (positionals.length === 0) {
 			throw new Error('At least one channel slug is required')

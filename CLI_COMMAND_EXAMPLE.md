@@ -104,12 +104,16 @@ export default {
 
 ## Key Points
 
-1. **Export an object** with `description`, `options`, `run()`, and `examples`
+1. **Export a default object** with `description`, `options`, `run()`, and `examples`
 2. **Options object** is used for both parsing (in `run()`) and help text generation
+   - The framework automatically generates `--help` / `-h` output from your `options`
+   - Each option's `description` appears in the help text
+   - Short flags, defaults, and types are all shown automatically
 3. **Use `this.options`** in the `run()` function: `parse(argv, this.options)`
 4. **Return a string** from `run()` to print to stdout
 5. **Use `console.error()`** for logging/debug output (goes to stderr)
 6. **Lead with examples** - users learn by example more than docs
+7. **Help is automatic** - users can run `r4 yourcommand --help` without you implementing it
 
 ## Option Types
 

@@ -6,10 +6,15 @@ import {parse} from '../../utils.js'
 export default {
 	description: 'Authenticate with Radio4000 using email OTP',
 
+	options: {
+		email: {
+			type: 'string',
+			description: 'Email address to authenticate with'
+		}
+	},
+
 	async run(argv) {
-		const {values} = parse(argv, {
-			email: {type: 'string'}
-		})
+		const {values} = parse(argv, this.options)
 
 		const rl = createInterface({
 			input: process.stdin,

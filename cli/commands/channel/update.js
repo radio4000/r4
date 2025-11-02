@@ -5,13 +5,27 @@ import {parse} from '../../utils.js'
 export default {
 	description: 'Update one or more channels',
 
+	options: {
+		name: {
+			type: 'string',
+			description: 'New name for the channel(s)'
+		},
+		description: {
+			type: 'string',
+			description: 'New description for the channel(s)'
+		},
+		image: {
+			type: 'string',
+			description: 'New image URL for the channel(s)'
+		},
+		sql: {
+			type: 'boolean',
+			description: 'Output result as SQL INSERT statements'
+		}
+	},
+
 	async run(argv) {
-		const {values, positionals} = parse(argv, {
-			name: {type: 'string'},
-			description: {type: 'string'},
-			image: {type: 'string'},
-			sql: {type: 'boolean'}
-		})
+		const {values, positionals} = parse(argv, this.options)
 
 		if (positionals.length === 0) {
 			throw new Error('At least one channel slug is required')

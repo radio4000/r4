@@ -5,12 +5,23 @@ import {parse} from '../../utils.js'
 export default {
 	description: 'Update one or more tracks',
 
+	options: {
+		title: {
+			type: 'string',
+			description: 'New title for the track(s)'
+		},
+		url: {
+			type: 'string',
+			description: 'New URL for the track(s)'
+		},
+		sql: {
+			type: 'boolean',
+			description: 'Output result as SQL INSERT statements'
+		}
+	},
+
 	async run(argv) {
-		const {values, positionals} = parse(argv, {
-			title: {type: 'string'},
-			url: {type: 'string'},
-			sql: {type: 'boolean'}
-		})
+		const {values, positionals} = parse(argv, this.options)
 
 		if (positionals.length === 0) {
 			throw new Error('At least one track ID is required')

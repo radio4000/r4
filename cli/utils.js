@@ -59,7 +59,6 @@ export async function route(argv) {
 	if (subcommands.length > 0) {
 		const commandPrefix = commandPath.join(' ')
 		const lines = []
-		lines.push(`Unknown or incomplete command: '${commandPrefix}'\n`)
 		lines.push(`Available ${commandPrefix} commands:\n`)
 		for (const sub of subcommands) {
 			const fullCmd = `r4 ${commandPrefix} ${sub.name}`.padEnd(30)
@@ -69,7 +68,8 @@ export async function route(argv) {
 		lines.push(
 			`\nUse 'r4 ${commandPrefix} <command> --help' for more information`
 		)
-		throw new Error(lines.join('\n'))
+		console.log(lines.join('\n'))
+		process.exit(0)
 	}
 	throw new Error(`'${commandPath.join(' ')}' requires a subcommand`)
 }

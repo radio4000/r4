@@ -4,12 +4,23 @@ import {parse} from '../../utils.js'
 export default {
 	description: 'Create a new track',
 
+	options: {
+		channel: {
+			type: 'string',
+			description: 'Channel slug (required)'
+		},
+		title: {
+			type: 'string',
+			description: 'Track title (required)'
+		},
+		url: {
+			type: 'string',
+			description: 'Track URL (required)'
+		}
+	},
+
 	async run(argv) {
-		const {values} = parse(argv, {
-			channel: {type: 'string'},
-			title: {type: 'string'},
-			url: {type: 'string'}
-		})
+		const {values} = parse(argv, this.options)
 
 		if (!values.channel) {
 			throw new Error('--channel is required')

@@ -5,11 +5,19 @@ import {parse} from '../../utils.js'
 export default {
 	description: 'Delete one or more channels',
 
+	options: {
+		confirm: {
+			type: 'boolean',
+			description: 'Confirm deletion (required for safety)'
+		},
+		sql: {
+			type: 'boolean',
+			description: 'Output result as SQL INSERT statements'
+		}
+	},
+
 	async run(argv) {
-		const {values, positionals} = parse(argv, {
-			confirm: {type: 'boolean'},
-			sql: {type: 'boolean'}
-		})
+		const {values, positionals} = parse(argv, this.options)
 
 		if (positionals.length === 0) {
 			throw new Error('At least one channel slug is required')
