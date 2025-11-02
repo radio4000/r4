@@ -100,7 +100,7 @@ export function parse(argv, options = {}) {
 		args: argv,
 		options: parseArgsOpts,
 		allowPositionals: true,
-		strict: false
+		strict: true
 	})
 
 	// Post-process: numbers, defaults, comma-separated values
