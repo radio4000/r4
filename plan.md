@@ -11,27 +11,18 @@ Ideas and tasks for later.
 
 ### Critical Issues (should fix)
 
-#### 1. No-args behavior
-**Current:** `r4` → Error: "No command specified"
-**Expected:** Show help (like bun, git, docker, npm)
-**Fix:** In cli/utils.js route(), if commandPath is empty, return help.js
+#### ✓ 1. No-args behavior
+**Fixed:** `r4` now shows help instead of error
 
-#### 2. Global --help flag not working
-**Current:** `r4 --help` → Error: "No command specified"
-**Expected:** Show help
-**Issue:** Flags are skipped during routing (utils.js:18-20)
-**Fix:** Handle --help and -h in main.js before routing
+#### ✓ 2. Global --help flag not working
+**Fixed:** `r4 --help` works (fixed by #1 - flags don't get added to commandPath)
 
-#### 3. Global --version flag not working
-**Current:** `r4 --version` → Error: "No command specified"
-**Expected:** Show version (also try -v)
-**Fix:** Handle --version/-v in main.js before routing
+#### ✓ 3. Global --version flag not working
+**Not needed:** We use `r4 version` instead (no `-v` or `--version` flags by design)
 
-#### 4. Subcommand --help ignored
-**Current:** `r4 channel list --help` → Executes command normally
-**Expected:** Show help for that specific command
-**Compare:** `bun run --help` shows detailed help for 'run' command
-**Fix:** Each command should check for --help in argv and return usage text
+#### ✓ 4. Subcommand --help ignored
+**Fixed:** `r4 channel list --help` (and `-h`) now show command-specific help
+**Implementation:** main.js checks for --help/-h before running command, displays help from command metadata (description + examples)
 
 ### Design Inspirations from Bun
 
