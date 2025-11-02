@@ -1,24 +1,19 @@
-import {formatOption} from '../../lib/common-options.js'
 import {listChannels} from '../../lib/data.js'
 import {formatOutput} from '../../lib/formatters.js'
+import {parse} from '../../utils.js'
 
-/** @type {import('../../../cli-framework/types.js').CommandDefinition} */
 export default {
 	description: 'List all channels (from v2 API or bundled v1 data)',
 
-	options: {
-		limit: {
-			type: 'number',
-			description: 'Limit number of results (default: 100)',
-			default: 100
-		},
-		...formatOption
-	},
+	async run(argv) {
+		const {values} = parse(argv, {
+			limit: {type: 'number', default: 100},
+			format: {type: 'string'}
+		})
 
-	handler: async (input) => {
-		const limit = input.limit ?? 100
+		const limit = values.limit ?? 100
 		const channels = await listChannels({limit})
-		const format = input.format || 'json'
+		const format = values.format || 'json'
 		return formatOutput(channels, format, {table: 'channels'})
 	},
 

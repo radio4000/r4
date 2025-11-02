@@ -4,7 +4,7 @@ import {formatJSON} from '../../lib/formatters.js'
 export default {
 	description: 'Show current session',
 
-	handler: async () => {
+	async run() {
 		const data = await config.load()
 		const session = data.auth?.session || null
 		return formatJSON(session)

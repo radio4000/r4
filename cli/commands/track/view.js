@@ -1,26 +1,22 @@
-import {formatOption} from '../../lib/common-options.js'
 import {getTrack} from '../../lib/data.js'
 import {formatOutput} from '../../lib/formatters.js'
+import {parse} from '../../utils.js'
 
-/** @type {import('../../../cli-framework/types.js').CommandDefinition} */
 export default {
 	description: 'View detailed information about one or more tracks',
 
-	args: [
-		{
-			name: 'id',
-			description: 'Track ID(s) to view',
-			required: true,
-			multiple: true
+	async run(argv) {
+		const {values, positionals} = parse(argv, {
+			format: {type: 'string'}
+		})
+
+		if (positionals.length === 0) {
+			throw new Error('At least one track ID is required')
 		}
-	],
 
-	options: formatOption,
-
-	handler: async (input) => {
-		const ids = Array.isArray(input.id) ? input.id : [input.id]
+		const ids = positionals
 		const tracks = await Promise.all(ids.map((id) => getTrack(id)))
-		const format = input.format || 'json'
+		const format = values.format || 'json'
 		const data = tracks.length === 1 ? tracks[0] : tracks
 		const formatOptions = format === 'sql' ? {table: 'tracks'} : undefined
 		return formatOutput(data, format, formatOptions)

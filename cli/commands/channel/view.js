@@ -1,26 +1,23 @@
-import {formatOption} from '../../lib/common-options.js'
 import {getChannel} from '../../lib/data.js'
 import {formatOutput} from '../../lib/formatters.js'
 import {formatChannelText} from '../../lib/text-formatters.js'
+import {parse} from '../../utils.js'
 
 export default {
 	description: 'View detailed information about one or more channels',
 
-	args: [
-		{
-			name: 'slug',
-			description: 'Channel slug(s) to view',
-			required: true,
-			multiple: true
+	async run(argv) {
+		const {values, positionals} = parse(argv, {
+			format: {type: 'string'}
+		})
+
+		if (positionals.length === 0) {
+			throw new Error('At least one channel slug is required')
 		}
-	],
 
-	options: formatOption,
-
-	handler: async (input) => {
-		const slugs = Array.isArray(input.slug) ? input.slug : [input.slug]
+		const slugs = positionals
 		const channels = await Promise.all(slugs.map((slug) => getChannel(slug)))
-		const format = input.format || 'json'
+		const format = values.format || 'json'
 
 		// Custom text formatting for channels
 		if (format === 'text') {

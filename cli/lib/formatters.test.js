@@ -22,7 +22,10 @@ describe('formatSQL', () => {
 		expect(result).toContain('INSERT INTO users')
 		expect(result).toContain("1, 'test', TRUE")
 
-		const multiple = [{id: 1, name: 'Alice'}, {id: 2, name: 'Bob'}]
+		const multiple = [
+			{id: 1, name: 'Alice'},
+			{id: 2, name: 'Bob'}
+		]
 		const result2 = formatSQL(multiple, {table: 'users'})
 		expect(result2.split('\n')).toHaveLength(2)
 	})
@@ -71,8 +74,12 @@ describe('formatOutput', () => {
 
 	test('routes to correct formatter with options', () => {
 		expect(formatOutput(testData)).toContain('"name": "test"') // defaults to json
-		expect(formatOutput(testData, 'json', {pretty: false})).toBe('{"name":"test","value":42}')
-		expect(formatOutput(testData, 'sql', {table: 'test'})).toContain('INSERT INTO test')
+		expect(formatOutput(testData, 'json', {pretty: false})).toBe(
+			'{"name":"test","value":42}'
+		)
+		expect(formatOutput(testData, 'sql', {table: 'test'})).toContain(
+			'INSERT INTO test'
+		)
 		expect(formatOutput(testData, 'text')).toContain('name: test')
 	})
 

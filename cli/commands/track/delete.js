@@ -1,25 +1,22 @@
-import {sqlOption} from '../../lib/common-options.js'
 import {deleteTrack} from '../../lib/data.js'
 import {formatOutput} from '../../lib/formatters.js'
+import {parse} from '../../utils.js'
 
 export default {
 	description: 'Delete one or more tracks',
 
-	args: [
-		{
-			name: 'id',
-			description: 'Track ID(s) to delete',
-			required: true,
-			multiple: true
+	async run(argv) {
+		const {values, positionals} = parse(argv, {
+			sql: {type: 'boolean'}
+		})
+
+		if (positionals.length === 0) {
+			throw new Error('At least one track ID is required')
 		}
-	],
 
-	options: sqlOption,
-
-	handler: async (input) => {
-		const ids = Array.isArray(input.id) ? input.id : [input.id]
+		const ids = positionals
 		const results = await Promise.all(ids.map((id) => deleteTrack(id)))
-		const format = input.sql ? 'sql' : 'json'
+		const format = values.sql ? 'sql' : 'json'
 		const data = results.length === 1 ? results[0] : results
 		const formatOptions = format === 'sql' ? {table: 'tracks'} : undefined
 		return formatOutput(data, format, formatOptions)

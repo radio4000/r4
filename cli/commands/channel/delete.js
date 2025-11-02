@@ -1,37 +1,34 @@
-import {sqlOption} from '../../lib/common-options.js'
 import {deleteChannel} from '../../lib/data.js'
 import {formatOutput} from '../../lib/formatters.js'
+import {parse} from '../../utils.js'
 
-/** @type {import('../../../cli-framework/types.js').CommandDefinition} */
 export default {
 	description: 'Delete one or more channels',
 
-	args: [
-		{
-			name: 'slug',
-			description: 'Channel slug(s) to delete',
-			required: true,
-			multiple: true
+	async run(argv) {
+		const {values, positionals} = parse(argv, {
+			confirm: {type: 'boolean'},
+			sql: {type: 'boolean'}
+		})
+
+		if (positionals.length === 0) {
+			throw new Error('At least one channel slug is required')
 		}
-	],
 
-	options: {
-		confirm: {
-			type: 'boolean',
-			description: 'Confirm deletion (required for safety)',
-			required: true
-		},
-		...sqlOption
-	},
+		if (!values.confirm) {
+			throw new Error('--confirm flag is required for safety')
+		}
 
-	handler: async (input) => {
-		const slugs = Array.isArray(input.slug) ? input.slug : [input.slug]
+		const slugs = positionals
 		const results = await Promise.all(slugs.map((slug) => deleteChannel(slug)))
-		const format = input.sql ? 'sql' : 'json'
+		const format = values.sql ? 'sql' : 'json'
 		const data = results.length === 1 ? results[0] : results
 		const formatOptions = format === 'sql' ? {table: 'channels'} : undefined
 		return formatOutput(data, format, formatOptions)
 	},
 
-	examples: ['r4 channel delete mysounds', 'r4 channel delete ch1 ch2 ch3']
+	examples: [
+		'r4 channel delete mysounds --confirm',
+		'r4 channel delete ch1 ch2 ch3 --confirm'
+	]
 }

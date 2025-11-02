@@ -1,31 +1,31 @@
 import {createTrack} from '../../lib/data.js'
-import {trackSchema} from '../../lib/schema.js'
+import {parse} from '../../utils.js'
 
 export default {
 	description: 'Create a new track',
 
-	options: {
-		channel: {
-			type: 'string',
-			description: 'Channel slug',
-			required: true
-		},
-		title: {
-			type: 'string',
-			description: 'Track title',
-			required: true
-		},
-		url: {
-			type: 'string',
-			description: 'Track URL',
-			required: true
+	async run(argv) {
+		const {values} = parse(argv, {
+			channel: {type: 'string'},
+			title: {type: 'string'},
+			url: {type: 'string'}
+		})
+
+		if (!values.channel) {
+			throw new Error('--channel is required')
 		}
-	},
+		if (!values.title) {
+			throw new Error('--title is required')
+		}
+		if (!values.url) {
+			throw new Error('--url is required')
+		}
 
-	validate: trackSchema.pick({title: true, url: true}),
-
-	handler: async (input) => {
-		return await createTrack({...input, slug: input.channel})
+		return await createTrack({
+			slug: values.channel,
+			title: values.title,
+			url: values.url
+		})
 	},
 
 	examples: [

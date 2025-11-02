@@ -1,36 +1,29 @@
 import {createChannel} from '../../lib/data.js'
-import {channelSchema} from '../../lib/schema.js'
+import {parse} from '../../utils.js'
 
-/** @type {import('../../../cli-framework/types.js').CommandDefinition} */
 export default {
 	description: 'Create a new channel',
 
-	args: [
-		{
-			name: 'slug',
-			description: 'Channel slug (e.g., my-sounds)',
-			required: true,
-			multiple: false
+	async run(argv) {
+		const {values, positionals} = parse(argv, {
+			name: {type: 'string'},
+			description: {type: 'string', default: ''}
+		})
+
+		if (positionals.length === 0) {
+			throw new Error('Channel slug is required')
 		}
-	],
 
-	options: {
-		name: {
-			type: 'string',
-			description: 'Channel name',
-			required: true
-		},
-		description: {
-			type: 'string',
-			description: 'Channel description',
-			default: ''
+		if (!values.name) {
+			throw new Error('--name is required')
 		}
-	},
 
-	validate: channelSchema.pick({slug: true, name: true, description: true}),
-
-	handler: async (input) => {
-		return await createChannel(input)
+		const slug = positionals[0]
+		return await createChannel({
+			slug,
+			name: values.name,
+			description: values.description
+		})
 	},
 
 	examples: [

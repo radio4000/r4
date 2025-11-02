@@ -1,43 +1,47 @@
 #!/usr/bin/env node
 import {dirname, resolve} from 'node:path'
 import {fileURLToPath} from 'node:url'
-import {executeCommand} from '../cli-framework/index.js'
-import {formatCLIError} from '../cli-framework/utils/help.js'
+import {route} from './utils.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
 async function main() {
 	const argv = process.argv.slice(2)
+	const commandsDir = resolve(__dirname, 'commands')
 
 	try {
-		const result = await executeCommand({
-			commandsDir: resolve(__dirname, 'commands'),
-			argv,
-			context: {
-				cwd: process.cwd()
-			}
-		})
+		// Route to command file
+		const {commandFile, commandArgv} = await route(commandsDir, argv)
 
-		// Commands return formatted strings, framework just prints
+		// Load command
+		const {default: cmd} = await import(`file://${commandFile}`)
+
+		// Execute command - support both new and old format
+		let result
+		if (typeof cmd.run === 'function') {
+			// New format: cmd.run(argv)
+			result = await cmd.run(commandArgv)
+		} else if (typeof cmd.handler === 'function') {
+			// Old format: fallback to framework for now
+			const {executeCommand} = await import('../cli-framework/index.js')
+			result = await executeCommand({
+				commandsDir,
+				argv,
+				context: {cwd: process.cwd()}
+			})
+		} else {
+			throw new Error('Command must export either run() or handler()')
+		}
+
+		// Commands return formatted strings, just print
 		if (result) {
 			console.log(result)
 		}
 		process.exit(0)
 	} catch (error) {
-		// Handle errors - use framework's error formatter
-		const output = formatCLIError(error)
-
-		// Print to stdout for help and menu-like messages, stderr for actual errors
-		if (
-			error.type === 'help_requested' ||
-			(error.type === 'unknown_command' && error.context?.available)
-		) {
-			console.log(output)
-			process.exit(0) // Help is not an error
-		} else {
-			console.error(output)
-			process.exit(1)
-		}
+		// Simple error handling - just print the error message
+		console.error(error.message)
+		process.exit(1)
 	}
 }
 

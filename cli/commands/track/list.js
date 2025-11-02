@@ -1,8 +1,8 @@
-import {formatOption} from '../../lib/common-options.js'
 import {listTracks} from '../../lib/data.js'
 import {formatJSON, formatSQL} from '../../lib/formatters.js'
 import {filterTracksByTags} from '../../lib/tags.js'
 import {formatTrackText} from '../../lib/text-formatters.js'
+import {parse} from '../../utils.js'
 
 function formatTrackSummary(tracks, limit) {
 	const totalCount = tracks.length
@@ -38,56 +38,42 @@ export default {
 	description:
 		'List tracks for specified channel(s), optionally filtered by tags',
 
-	options: {
-		channel: {
-			type: 'string',
-			description: 'Channel slug to filter by (can be used multiple times)',
-			multiple: true,
-			required: true
-		},
-		tag: {
-			type: 'string',
-			description: 'Filter by tag (supports --tag a --tag b or --tag a,b,c)',
-			multiple: true
-		},
-		'match-all': {
-			type: 'boolean',
-			description:
-				'When using multiple tags, require all tags to match (AND logic)',
-			default: false
-		},
-		limit: {
-			type: 'number',
-			description: 'Limit number of results'
-		},
-		format: {
-			...formatOption.format,
-			default: 'text'
-		}
-	},
+	async run(argv) {
+		const {values} = parse(argv, {
+			channel: {type: 'string', multiple: true},
+			tag: {type: 'string', multiple: true},
+			'match-all': {type: 'boolean', default: false},
+			limit: {type: 'number'},
+			format: {type: 'string', default: 'text'}
+		})
 
-	handler: async (input) => {
-		const channelSlugs = input.channel && [input.channel].flat()
-		const format = input.format || 'text'
-		const tags = input.tag
-			? Array.isArray(input.tag)
-				? input.tag
-				: [input.tag]
+		if (!values.channel || values.channel.length === 0) {
+			throw new Error('--channel is required')
+		}
+
+		const channelSlugs = Array.isArray(values.channel)
+			? values.channel
+			: [values.channel]
+		const format = values.format || 'text'
+		const tags = values.tag
+			? Array.isArray(values.tag)
+				? values.tag
+				: [values.tag]
 			: null
-		const matchAll = input['match-all'] || false
+		const matchAll = values['match-all'] || false
 
 		// Fetch all tracks from channel(s), don't apply limit yet if filtering by tags
 		let tracks = await listTracks({
 			channelSlugs,
-			limit: tags ? undefined : input.limit
+			limit: tags ? undefined : values.limit
 		})
 
 		// Filter by tags if specified
 		if (tags && tags.length > 0) {
 			tracks = filterTracksByTags(tracks, tags, matchAll)
 			// Apply limit after filtering
-			if (input.limit) {
-				tracks = tracks.slice(0, input.limit)
+			if (values.limit) {
+				tracks = tracks.slice(0, values.limit)
 			}
 		}
 
@@ -102,7 +88,7 @@ export default {
 
 		// Format based on requested format
 		if (format === 'text') {
-			return formatTrackSummary(tracks, input.limit)
+			return formatTrackSummary(tracks, values.limit)
 		}
 		if (format === 'sql') {
 			return formatSQL(tracks, {table: 'tracks'})

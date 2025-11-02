@@ -1,4 +1,5 @@
 import {searchAll, searchChannels, searchTracks} from '../lib/data.js'
+import {parse} from '../utils.js'
 
 // Pure formatters
 const formatChannel = (ch) => `${ch.slug}\t${ch.name || 'Untitled'}`
@@ -27,35 +28,6 @@ const buildCombinedMessage = (channels, tracks) => {
 
 export default {
 	description: 'Search channels and tracks',
-	args: [
-		{
-			name: 'query',
-			required: true,
-			description: 'Search query'
-		}
-	],
-	options: {
-		channels: {
-			type: 'boolean',
-			description: 'Search only channels',
-			default: false
-		},
-		tracks: {
-			type: 'boolean',
-			description: 'Search only tracks',
-			default: false
-		},
-		limit: {
-			type: 'number',
-			description: 'Limit number of results per category (default: 10)',
-			default: 10
-		},
-		format: {
-			type: 'string',
-			description: 'Output format: text (default) or json',
-			default: 'text'
-		}
-	},
 	examples: [
 		'r4 search ambient',
 		'r4 search ambient --channels',
@@ -63,8 +35,20 @@ export default {
 		'r4 search "electronic music" --tracks',
 		'r4 search ambient --format json'
 	],
-	async handler(input) {
-		const {query, channels, tracks, limit = 10, format = 'text'} = input
+	async run(argv) {
+		const {values, positionals} = parse(argv, {
+			channels: {type: 'boolean', default: false},
+			tracks: {type: 'boolean', default: false},
+			limit: {type: 'number', default: 10},
+			format: {type: 'string', default: 'text'}
+		})
+
+		const query = positionals[0]
+		if (!query) {
+			throw new Error('Missing search query')
+		}
+
+		const {channels, tracks, limit, format} = values
 
 		if (channels && tracks) {
 			throw new Error('Cannot specify both --channels and --tracks')

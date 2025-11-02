@@ -1,19 +1,16 @@
 import {createInterface} from 'node:readline/promises'
 import {sdk} from '@radio4000/sdk'
 import * as config from '../../lib/config.js'
+import {parse} from '../../utils.js'
 
 export default {
 	description: 'Authenticate with Radio4000 using email OTP',
 
-	options: {
-		email: {
-			type: 'string',
-			description: 'Email address',
-			required: false
-		}
-	},
+	async run(argv) {
+		const {values} = parse(argv, {
+			email: {type: 'string'}
+		})
 
-	handler: async (input) => {
 		const rl = createInterface({
 			input: process.stdin,
 			output: process.stdout
@@ -21,7 +18,7 @@ export default {
 
 		try {
 			// Get email (from flag or prompt)
-			let email = input.email
+			let email = values.email
 			if (!email) {
 				email = await rl.question('Email: ')
 				email = email.trim()

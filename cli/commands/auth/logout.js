@@ -4,7 +4,7 @@ import {formatJSON} from '../../lib/formatters.js'
 export default {
 	description: 'Clear local session',
 
-	handler: async () => {
+	async run() {
 		await config.update({auth: {session: null}})
 		return formatJSON({cleared: true})
 	},
