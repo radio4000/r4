@@ -77,6 +77,31 @@ Examples:
   r4 channel list --limit 10
 ```
 
+### Bugs Found (Nov 2025 Testing)
+
+#### Unknown flags silently ignored
+**Issue:** `r4 channel list --unknown-flag` works without warning
+- Typos like `--limt` instead of `--limit` go unnoticed
+- Should validate and error on unknown flags
+
+#### `--limit` validation missing
+**Issue:** Invalid limit values are silently ignored
+- `r4 channel list --limit 0` → returns default results
+- `r4 channel list --limit -5` → returns default results
+- Should validate numeric values and warn/error on invalid inputs
+
+#### `track list` requires `--channel` but help says otherwise
+**Issue:** Inconsistent behavior and documentation
+- Running `r4 track list` errors: "--channel is required"
+- But help text says: "track list    List all tracks"
+- Either make it work without channel OR fix help text to say "List tracks for specified channel(s)"
+
+#### `--format` flag availability unclear
+**Issue:** Not documented which commands support `--format`
+- Works on `track list` (json, m3u)
+- Accepted on `channel list` but seems to always output JSON
+- Need to document which commands support which formats, or make it consistent
+
 ### Nice to Have
 
 #### Shell completions
