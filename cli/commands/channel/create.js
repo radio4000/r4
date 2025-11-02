@@ -4,11 +4,20 @@ import {parse} from '../../utils.js'
 export default {
 	description: 'Create a new channel',
 
+	options: {
+		name: {
+			type: 'string',
+			description: 'Channel name (required)'
+		},
+		description: {
+			type: 'string',
+			default: '',
+			description: 'Channel description'
+		}
+	},
+
 	async run(argv) {
-		const {values, positionals} = parse(argv, {
-			name: {type: 'string'},
-			description: {type: 'string', default: ''}
-		})
+		const {values, positionals} = parse(argv, this.options)
 
 		if (positionals.length === 0) {
 			throw new Error('Channel slug is required')

@@ -28,20 +28,32 @@ const buildCombinedMessage = (channels, tracks) => {
 
 export default {
 	description: 'Search channels and tracks',
-	examples: [
-		'r4 search ambient',
-		'r4 search ambient --channels',
-		'r4 search ko002 --channels --limit 5',
-		'r4 search "electronic music" --tracks',
-		'r4 search ambient --format json'
-	],
+
+	options: {
+		channels: {
+			type: 'boolean',
+			default: false,
+			description: 'Search only channels'
+		},
+		tracks: {
+			type: 'boolean',
+			default: false,
+			description: 'Search only tracks'
+		},
+		limit: {
+			type: 'number',
+			default: 10,
+			description: 'Limit number of results'
+		},
+		format: {
+			type: 'string',
+			default: 'text',
+			description: 'Output format: text or json'
+		}
+	},
+
 	async run(argv) {
-		const {values, positionals} = parse(argv, {
-			channels: {type: 'boolean', default: false},
-			tracks: {type: 'boolean', default: false},
-			limit: {type: 'number', default: 10},
-			format: {type: 'string', default: 'text'}
-		})
+		const {values, positionals} = parse(argv, this.options)
 
 		const query = positionals[0]
 		if (!query) {
@@ -85,5 +97,13 @@ export default {
 		return format === 'json'
 			? JSON.stringify(results, null, 2)
 			: buildCombinedMessage(chs, trks)
-	}
+	},
+
+	examples: [
+		'r4 search ambient',
+		'r4 search ambient --channels',
+		'r4 search ko002 --channels --limit 5',
+		'r4 search "electronic music" --tracks',
+		'r4 search ambient --format json'
+	]
 }

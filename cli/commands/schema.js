@@ -16,11 +16,19 @@ const selectSchemas = (values) => {
 export default {
 	description: 'Output SQL CREATE TABLE statements for channels and tracks',
 
+	options: {
+		channels: {
+			type: 'boolean',
+			description: 'Output only channels table schema'
+		},
+		tracks: {
+			type: 'boolean',
+			description: 'Output only tracks table schema'
+		}
+	},
+
 	async run(argv) {
-		const {values} = parse(argv, {
-			channels: {type: 'boolean'},
-			tracks: {type: 'boolean'}
-		})
+		const {values} = parse(argv, this.options)
 
 		return selectSchemas(values).join('\n\n')
 	},

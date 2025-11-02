@@ -11,17 +11,49 @@ import {parse} from '../utils.js'
 export default {
 	description: 'Download all tracks from a channel',
 
+	options: {
+		output: {
+			type: 'string',
+			description: 'Output folder path (defaults to ./<slug>)'
+		},
+		limit: {
+			type: 'number',
+			description: 'Limit number of tracks to download'
+		},
+		force: {
+			type: 'boolean',
+			default: false,
+			description: 'Re-download existing files'
+		},
+		'retry-failed': {
+			type: 'boolean',
+			default: false,
+			description: 'Retry previously failed downloads'
+		},
+		'dry-run': {
+			type: 'boolean',
+			default: false,
+			description: 'Show what would be downloaded without downloading'
+		},
+		verbose: {
+			type: 'boolean',
+			default: false,
+			description: 'Show detailed output'
+		},
+		'no-metadata': {
+			type: 'boolean',
+			default: false,
+			description: 'Skip writing metadata files'
+		},
+		concurrency: {
+			type: 'number',
+			default: 3,
+			description: 'Number of concurrent downloads'
+		}
+	},
+
 	async run(argv) {
-		const {values, positionals} = parse(argv, {
-			output: {type: 'string'},
-			limit: {type: 'number'},
-			force: {type: 'boolean', default: false},
-			'retry-failed': {type: 'boolean', default: false},
-			'dry-run': {type: 'boolean', default: false},
-			verbose: {type: 'boolean', default: false},
-			'no-metadata': {type: 'boolean', default: false},
-			concurrency: {type: 'number', default: 3}
-		})
+		const {values, positionals} = parse(argv, this.options)
 
 		const slug = positionals[0]
 		if (!slug) {
