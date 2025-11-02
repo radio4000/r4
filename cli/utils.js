@@ -21,7 +21,11 @@ export async function route(argv) {
 	}
 
 	if (commandPath.length === 0) {
-		throw new Error('No command specified')
+		return {
+			commandFile: join(resolvedDir, 'help.js'),
+			commandArgv: [],
+			commandName: 'help'
+		}
 	}
 
 	// Walk directory structure to find command file
