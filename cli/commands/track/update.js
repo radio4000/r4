@@ -14,6 +14,10 @@ export default {
 			type: 'string',
 			description: 'New URL for the track(s)'
 		},
+		description: {
+			type: 'string',
+			description: 'New description for the track(s)'
+		},
 		sql: {
 			type: 'boolean',
 			description: 'Output result as SQL INSERT statements'
@@ -29,7 +33,8 @@ export default {
 
 		const updates = {
 			title: values.title,
-			url: values.url
+			url: values.url,
+			description: values.description
 		}
 
 		if (Object.values(updates).every((val) => val === undefined)) {
@@ -45,8 +50,9 @@ export default {
 	},
 
 	examples: [
-		'r4 track update abc123 --title "New Title"',
-		'r4 track update abc123 --url "https://new-url.com"',
-		'r4 track update abc123 def456 --title "Same Title"'
+		'r4 track update <id> --title "New Title"',
+		'r4 track update <id> --url "https://new-url.com"',
+		'r4 track update <id> --description "New description"',
+		'r4 track update <id1> <id2> --title "Same Title"'
 	]
 }

@@ -134,9 +134,11 @@ export async function updateChannel(slug, updates) {
 	const channel = await getChannel(slug)
 	if (channel.source === 'v1') rejectV1Mutation('channel', slug)
 
-	const {data, error} = await sdk.channels.updateChannel(channel.id, updates)
+	const {error} = await sdk.channels.updateChannel(channel.id, updates)
 	if (error) throw error
-	return channelSchema.parse({...data, source: 'v2'})
+
+	// Fetch the updated channel since updateChannel doesn't return the full object
+	return await getChannel(slug)
 }
 
 export async function deleteChannel(slug) {
@@ -255,9 +257,11 @@ export async function updateTrack(id, updates) {
 	const track = await getTrack(id)
 	if (track.source === 'v1') rejectV1Mutation('track', id)
 
-	const {data, error} = await sdk.tracks.updateTrack(id, updates)
+	const {error} = await sdk.tracks.updateTrack(id, updates)
 	if (error) throw error
-	return trackSchema.parse({...data, source: 'v2'})
+
+	// Fetch the updated track since updateTrack doesn't return the full object
+	return await getTrack(id)
 }
 
 export async function deleteTrack(id) {
