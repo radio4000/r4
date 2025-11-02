@@ -77,17 +77,6 @@ Examples:
   r4 channel list --limit 10
 ```
 
-#### Error message quality: Add "Did you mean?" suggestions
-**Current:** `r4 channal` → "Unknown command: channal"
-**Better:** Show fuzzy-matched suggestions for typos
-
-**Implementation ideas:**
-- Use Levenshtein distance or similar algorithm
-- Only suggest if distance is small (1-2 edits)
-- Example: "Unknown command: channal. Did you mean 'channel'?"
-
-**clig.dev guidance:** "If the user did something wrong and you can guess what they meant, suggest it."
-
 ### Nice to Have
 
 #### Shell completions
