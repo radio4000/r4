@@ -61,11 +61,12 @@ export default {
 
 			// Step 3: Verify OTP
 			console.error('Verifying code...')
-			const {data: verifyData, error: verifyError} = await sdk.supabase.auth.verifyOtp({
-				email,
-				token: trimmedCode,
-				type: 'email'
-			})
+			const {data: verifyData, error: verifyError} =
+				await sdk.supabase.auth.verifyOtp({
+					email,
+					token: trimmedCode,
+					type: 'email'
+				})
 
 			if (verifyError || !verifyData.session) {
 				console.error(
