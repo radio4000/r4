@@ -50,7 +50,7 @@ export default {
 		}
 
 		const help = `
-R4(1)                     User Commands                    R4(1)
+R4(1)                    Command-line interface                    R4(1)
 
 NAME
        r4 - Radio4000 command-line interface
@@ -60,10 +60,10 @@ SYNOPSIS
 
 TLDR
        r4 channel list --limit 10      # List channels
-       r4 channel view ko002        # View channel details
+       r4 channel view ko002           # View channel details
        r4 track list                   # List all tracks
        r4 track list --channel foo     # List tracks in channel
-       r4 auth login                   # Authenticate
+       r4 auth                         # Authenticate
        r4 help                         # Show this help
        r4 version                      # Show version
 
@@ -105,13 +105,11 @@ EXAMPLES
        r4 track list --channel foo | jq '.[] | .title'
 
        # Download
-       r4 download ko002 --folder ~/Music
+       r4 download ko002 --output ~/Music
 
 SEE ALSO
        https://radio4000.com
        https://github.com/radio4000/r4
-
-R4 1.0                    2025-10-28                       R4(1)
 `.trim()
 
 		return help

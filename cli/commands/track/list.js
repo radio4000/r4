@@ -12,23 +12,18 @@ function formatTrackSummary(tracks, limit) {
 
 	if (totalCount > 0) {
 		const showing = Math.min(displayLimit, totalCount)
-		lines.push(`Showing ${showing} track${showing !== 1 ? 's' : ''}:`)
+		const trackWord = totalCount !== 1 ? 'tracks' : 'track'
+
+		if (totalCount > displayLimit) {
+			lines.push(`Showing ${showing} of ${totalCount} ${trackWord}:`)
+		} else {
+			lines.push(`Showing ${showing} ${trackWord}:`)
+		}
 
 		displayTracks.forEach((track) => {
 			// Format single track inline (title + description + url)
 			lines.push(`${track.title}\n${track.description}\n  ${track.url}`)
 		})
-
-		if (totalCount > displayLimit) {
-			lines.push('')
-			lines.push(`... and ${totalCount - displayLimit} more`)
-		}
-
-		lines.push('')
-		lines.push('Use --format json or --format sql for full data export')
-		if (!limit) {
-			lines.push('Use --limit N to show more tracks in summary')
-		}
 	}
 
 	return lines.join('\n')
@@ -47,7 +42,7 @@ export default {
 		tag: {
 			type: 'string',
 			multiple: true,
-			description: 'Filter by tag(s)'
+			description: 'Filter by tag(s) (comma-separated or multiple --tag flags)'
 		},
 		'match-all': {
 			type: 'boolean',
