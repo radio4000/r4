@@ -4,19 +4,16 @@ Ideas and tasks for later.
 
 ---- READY TO PICK UP -----
 
-## Progress spinners (only when TTY) - 1-2h
+## Progress spinners (only when TTY)
 - Create cli/lib/spinner.js with TTY detection
 - Add to channel/track list commands
 - Use frames: ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
 - Guard: process.stdout.isTTY, no-op if false
 
-## stdin support (`-` flag) - 1-2h
-- Create cli/lib/stdin.js with readStdin()
-- Update track list/download to accept `-` for channel slugs
-- Standard Unix pattern: `r4 channel list | r4 track list -`
-- Expect JSON from stdin, parse and extract slugs
-
 ## Code review fixes
+
+double-check these before tackling them. 
+
 - Fix formatOption.parse validation in common-options.js (not being called by utils.parse)
 - Improve error handling in config.js (differentiate file-not-found from corruption)
 - Extract console.error side effects from data.js (return structured errors instead)
@@ -29,7 +26,10 @@ Ideas and tasks for later.
 
 --- IDEAS TO EVALUATE ---
 
-## Local cache - 4-6h
+## Local cache
+
+At the moment every single command that reads R4 data does so from the Supabase remote. No caching. We could consider caching somewhere.
+
 - File-based cache in ~/.cache/radio4000/
 - Cache keys: `{resource}:{identifier}` (tracks:channelSlug:mychannel)
 - Default TTL: 5 minutes
@@ -37,7 +37,10 @@ Ideas and tasks for later.
 - Add r4 cache clear/stats commands
 - Wrap listChannels()/listTracks()
 
-## YouTube premium/poToken - 8h+
+## YouTube premium/poToken
+
+By default yt-dlp downloads in maximum 192kbps afaik. but with a signed in token from youtube premium/music, you can get 256kbps. It's a bit sneaky to make it work, but it does work.
+
 - Research yt-dlp cookie auth flow first
 - Add youtube.cookies to config.js schema
 - Commands: r4 youtube auth <cookies.txt>, r4 youtube status
