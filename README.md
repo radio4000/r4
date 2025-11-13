@@ -1,61 +1,49 @@
-# NAME
+# r4
 
-r4 - the Radio4000 CLI
+Command-line interface for [Radio4000](https://radio4000.com)
+- browse, create, update, and download radio channels and tracks.
 
-# USAGE
 
+## Installation
+
+```bash
+npm i -g r4
+r4
 ```
-r4 download <channel-slug>
-r4 <command> help
-r4 -h, --help
-r4 -v, --version
+
+> For the `r4 download` command to work, make sure [`yt-dlp`](https://github.com/yt-dlp/yt-dlp) is installed on your system.
+
+Here's a quick overview:
+
+```bash
+r4 channel list --limit 10
+r4 channel view ko002
+r4 track list --channel ko002
+r4 track list --channel ko002 --tag jazz,ambient
+r4 download ko002
+r4 search "ambient"
+r4 auth login
+r4 channel create radio123 --name "Radio 123"
+r4 track create --channel radio123 --title "Song" --url "https://youtube.com/..."
+r4 track update <id> --title "Updated song"
+
+# Pipe and compose
+r4 track list --channel ko002 --limit 10 | jq '.[] | .title'
+
+# Or export to sqlite
+r4 schema | sqlite3 my.db
+r4 track list --channel ko002 --format sql | sqlite3 my.db
 ```
 
-# DESCRIPTION
+Most commands support a  `--format` flag to print human-readable text, json or SQL.
 
-r4 is a program for interacting with Radio4000.
+## Development
 
-# INSTALLATION
-
-For downloads to work, make sure
-`[youtube-dl](https://github.com/rg3/youtube-dl/)` and `ffmpeg`
-installed on your system.
-
-Prefer `npm` (over `yarn`, as the yarn linking is not global with nvm).
-
-## From npm
-
-- `npm i -g r4`, to install r4 globally
-- `r4` should now be available as a command in your terminal/shell
-
-## From gitlab directly
-
-To install r4 as a global npm package from a gitab repository do:
-
-- `npm i -g gitlab:internet4000/r4`
-
-# DEVELOPMENT
-
-1. git clone git@github.com:internet4000/r4.git
-2. cd r4
-3. npm link
-
-Linking makes `r4` use your local copy. If you you are changing the
-path or adding a new binary, remember to run `npm unlink` and `npm link` in the project.
-
-Lint scripts and run tests with `npm run test`.
-To format scripts, run `npm run prettier`.
-
-
-# FURTHER NOTES
-
-If you have `jq` installed, you can actually download the tracks of a channel with this one-liner:
-
-```
-curl https://api.radio4000.com/v1/channels/-JYZtdQfLSl6sUpyIJx6/tracks | jq -r '.[] | .url' | youtube-dl -ixa /dev/stdin --audio-format mp3
-```
-... if you don't have `jq`, but have `python`, try this:
-
-```
-curl https://api.radio4000.com/v1/channels/-JYZtdQfLSl6sUpyIJx6/tracks | python -m json.tool | grep -oP '"url": "\K(.+)",' | youtube-dl -a /dev/stdin --extract-audio --audio-format mp3
+```bash
+git clone git@github.com:radio4000/r4.git
+cd r4
+bun install
+bun link
+bun run check  # format and lint
+bun run test
 ```
