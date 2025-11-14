@@ -1,4 +1,6 @@
-import {readFile} from 'node:fs/promises'
+import {readFile, access} from 'node:fs/promises'
+import {execFile as execFileCallback} from 'node:child_process'
+import {promisify} from 'node:util'
 import {dirname, resolve} from 'node:path'
 import {fileURLToPath} from 'node:url'
 import {sdk} from '@radio4000/sdk'
@@ -6,11 +8,14 @@ import fuzzysort from 'fuzzysort'
 import * as config from './config.js'
 import {channelSchema, trackSchema} from './schema.js'
 
+const execFile = promisify(execFileCallback)
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
 // V1 data paths
-const V1_CHANNELS_PATH = resolve(__dirname, '../../data/channels_v1.json')
-const V1_TRACKS_PATH = resolve(__dirname, '../../data/tracks_v1.json')
+const dataDir = resolve(__dirname, '../../data')
+const tarballPath = resolve(dataDir, 'data_v1.tar.gz')
+const channelsPath = resolve(dataDir, 'channels_v1.json')
+const tracksPath = resolve(dataDir, 'tracks_v1.json')
 
 // Cache for v1 data
 let v1ChannelsCache = null
@@ -90,9 +95,19 @@ const rejectV1Mutation = (type, id) => {
 
 // ===== V1 DATA LOADERS =====
 
+async function ensureV1DataExtracted() {
+	try {
+		await access(channelsPath)
+		await access(tracksPath)
+	} catch {
+		await execFile('tar', ['xzf', tarballPath, '-C', dataDir])
+	}
+}
+
 export async function loadV1Channels() {
 	if (v1ChannelsCache) return v1ChannelsCache
-	const content = await readFile(V1_CHANNELS_PATH, 'utf-8')
+	await ensureV1DataExtracted()
+	const content = await readFile(channelsPath, 'utf-8')
 	v1ChannelsCache = JSON.parse(content).map((item) =>
 		channelSchema.parse({...item, source: 'v1'})
 	)
@@ -101,7 +116,8 @@ export async function loadV1Channels() {
 
 export async function loadV1Tracks() {
 	if (v1TracksCache) return v1TracksCache
-	const content = await readFile(V1_TRACKS_PATH, 'utf-8')
+	await ensureV1DataExtracted()
+	const content = await readFile(tracksPath, 'utf-8')
 	v1TracksCache = JSON.parse(content)
 		.map((item) => {
 			try {
