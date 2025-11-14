@@ -34,7 +34,7 @@ jobs:
 
       - name: Publish to NPM
         run: |
-          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
-          npm publish --access public --provenance
+          bun config set --global registry https://registry.npmjs.org/
+          bun publish --access public
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          BUN_NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
